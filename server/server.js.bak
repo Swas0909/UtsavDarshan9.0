@@ -1,0 +1,168 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+
+const app = express();
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Import pandal data
+const { pandals: pandalsData } = require('./data/pandals.json');
+  {
+    id: 1,
+    name: "Lalbaugcha Raja",
+    location: "Lalbaug, Mumbai",
+    theme: "Traditional",
+    coordinates: { lat: 18.9419, lng: 72.8417 },
+    rating: 4.9,
+    description: "One of Mumbai's most famous Ganesh mandals, known for its wish-fulfilling miracles",
+    imageUrl: "https://example.com/lalbaug.jpg",
+    visitingHours: "24 hours",
+    crowdLevel: "High",
+    history: "Established in 1934, Lalbaugcha Raja is one of the most prominent Ganesh mandals in Mumbai",
+    established: 1934
+  },
+  {
+    id: 2,
+    name: "GSB Seva Mandal",
+    location: "Kings Circle, Mumbai",
+    theme: "Eco-Friendly",
+    coordinates: { lat: 19.0219, lng: 72.8544 },
+    rating: 4.8,
+    description: "Known for its eco-friendly celebrations and golden decorations",
+    imageUrl: "https://example.com/gsb.jpg",
+    visitingHours: "6 AM - 11 PM",
+    crowdLevel: "Medium",
+    history: "GSB Seva Mandal is famous for its eco-friendly approach and cultural authenticity",
+    established: 1954
+  },
+  {
+    id: 3,
+    name: "Andhericha Raja",
+    location: "Andheri, Mumbai",
+    theme: "Modern",
+    coordinates: { lat: 19.1196, lng: 72.8469 },
+    rating: 4.7,
+    description: "Famous for its innovative themes and decorations",
+    imageUrl: "https://example.com/andheri.jpg",
+    visitingHours: "6 AM - 12 AM",
+    crowdLevel: "High",
+    history: "Known for its creative themes and modern interpretations",
+    established: 1966
+  },
+  {
+    id: 4,
+    name: "Khetwadi Ganraj",
+    location: "Girgaon, Mumbai",
+    theme: "Traditional",
+    coordinates: { lat: 18.9547, lng: 72.8182 },
+    rating: 4.6,
+    description: "Famous for its traditional decorations and cultural significance",
+    imageUrl: "https://example.com/khetwadi.jpg",
+    visitingHours: "7 AM - 11 PM",
+    crowdLevel: "Medium",
+    history: "One of the oldest Ganesh mandals in Mumbai",
+    established: 1959
+  },
+  {
+    id: 5,
+    name: "Chinchpokli Chintamani",
+    location: "Chinchpokli, Mumbai",
+    theme: "Traditional",
+    coordinates: { lat: 18.9744, lng: 72.8266 },
+    rating: 4.5,
+    description: "Known for its magnificent decorations and spiritual ambiance",
+    imageUrl: "https://example.com/chinchpokli.jpg",
+    visitingHours: "6 AM - 11 PM",
+    crowdLevel: "Medium",
+    history: "A historic mandal celebrating traditional values",
+    established: 1920
+  }
+  // Note: This is a sample of 5 pandals, the actual implementation should include all 50 pandals
+];
+
+// Import reviews data
+const reviews = require('./data/reviews');
+
+// API Routes
+app.get('/api/pandals', (req, res) => {
+  const { search, location, theme, distance, lat, lng, sortBy } = req.query;
+  let filtered = [...pandalsData];
+
+  if (search) {
+    const searchLower = search.toLowerCase();
+    filtered = filtered.filter(p => 
+      p.name.toLowerCase().includes(searchLower) ||
+      p.location.toLowerCase().includes(searchLower) ||
+      p.theme.toLowerCase().includes(searchLower)
+    );
+  }
+
+  if (location) {
+    filtered = filtered.filter(p => 
+      p.location.toLowerCase().includes(location.toLowerCase())
+    );
+  }
+
+  if (theme) {
+    filtered = filtered.filter(p => 
+      p.theme.toLowerCase() === theme.toLowerCase()
+    );
+  }
+
+  if (distance && lat && lng) {
+    const userLat = parseFloat(lat);
+    const userLng = parseFloat(lng);
+    const maxDistance = parseFloat(distance);
+
+    filtered = filtered.filter(p => {
+      const d = calculateDistance(
+        userLat,
+        userLng,
+        p.coordinates.lat,
+        p.coordinates.lng
+      );
+      return d <= maxDistance;
+    });
+
+    if (sortBy === 'distance') {
+      filtered.sort((a, b) => {
+        const distA = calculateDistance(userLat, userLng, a.coordinates.lat, a.coordinates.lng);
+        const distB = calculateDistance(userLat, userLng, b.coordinates.lat, b.coordinates.lng);
+        return distA - distB;
+      });
+    }
+  }
+
+  res.json(filtered);
+});
+
+// Get pandal by ID
+app.get('/api/pandals/:id', (req, res) => {
+  const pandal = pandalsData.find(p => p.id === parseInt(req.params.id));
+  if (!pandal) {
+    return res.status(404).json({ error: 'Pandal not found' });
+  }
+  res.json(pandal);
+});
+
+// Helper function to calculate distance between coordinates
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Radius of the Earth in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c; // Distance in km
+}
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

@@ -1,0 +1,511 @@
+import React, { useState, useEffect, useCallback } from 'react';import React, { useState, useEffect, useCallback } from 'react';
+
+import { Container, Row, Col, Form, Button } from 'react-bootstrap';import { Container, Row, Col, Form, Button, Card } from 'react-bootstrap';
+
+import PandalGrid from './PandalGrid';import { Link } from 'react-router-dom';
+
+import PandalGrid from './PandalGrid';
+
+const ExplorePanel = () => {
+
+  // Statesconst ExplorePanel = () => {
+
+  const [pandals, setPandals] = useState([]);  // States
+
+  const [filteredPandals, setFilteredPandals] = useState([]);  const [pandals, setPandals] = useState([]);
+
+  const [searchTerm, setSearchTerm] = useState('');  const [filteredPandals, setFilteredPandals] = useState([]);
+
+  const [currentPage, setCurrentPage] = useState(1);  const [searchTerm, setSearchTerm] = useState('');
+
+  const [itemsPerPage, setItemsPerPage] = useState(12);  const [currentPage, setCurrentPage] = useState(1);
+
+  const [filters, setFilters] = useState({  const [itemsPerPage, setItemsPerPage] = useState(12);
+
+    location: '',  const [filters, setFilters] = useState({
+
+    theme: '',    location: '',
+
+    distance: '',    theme: '',
+
+    area: '',    distance: '',
+
+    crowdLevel: ''    area: '',
+
+  });    crowdLevel: ''
+
+  const [userLocation, setUserLocation] = useState(null);  });
+
+  const [userLocation, setUserLocation] = useState(null);
+
+  // Utility functions
+
+  const calculateDistance = useCallback((lat1, lon1, lat2, lon2) => {  // Utility functions
+
+    const R = 6371; // Radius of the Earth in km  const calculateDistance = useCallback((lat1, lon1, lat2, lon2) => {
+
+    const dLat = (lat2 - lat1) * Math.PI / 180;    const R = 6371; // Radius of the Earth in km
+
+    const dLon = (lon2 - lon1) * Math.PI / 180;    const dLat = (lat2 - lat1) * Math.PI / 180;
+
+    const a =     const dLon = (lon2 - lon1) * Math.PI / 180;
+
+      Math.sin(dLat/2) * Math.sin(dLat/2) +    const a = 
+
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *       Math.sin(dLat/2) * Math.sin(dLat/2) +
+
+      Math.sin(dLon/2) * Math.sin(dLon/2);      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));      Math.sin(dLon/2) * Math.sin(dLon/2);
+
+    return R * c; // Distance in km    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+  }, []);    return R * c; // Distance in km
+
+  }, []);
+
+  const sortPandalsByDistance = useCallback((userLat, userLng) => {
+
+    const sortedPandals = [...filteredPandals].sort((a, b) => {  const sortPandalsByDistance = useCallback((userLat, userLng) => {
+
+      const distanceA = calculateDistance(userLat, userLng, a.coordinates.lat, a.coordinates.lng);    const sortedPandals = [...filteredPandals].sort((a, b) => {
+
+      const distanceB = calculateDistance(userLat, userLng, b.coordinates.lat, b.coordinates.lng);      const distanceA = calculateDistance(userLat, userLng, a.coordinates.lat, a.coordinates.lng);
+
+      return distanceA - distanceB;      const distanceB = calculateDistance(userLat, userLng, b.coordinates.lat, b.coordinates.lng);
+
+    });      return distanceA - distanceB;
+
+    setFilteredPandals(sortedPandals);    });
+
+  }, [filteredPandals, calculateDistance]);    setFilteredPandals(sortedPandals);
+
+  }, [filteredPandals, calculateDistance]);
+
+  const applyFiltersAndSearch = useCallback(() => {
+
+    let filtered = [...pandals];  const applyFiltersAndSearch = useCallback(() => {
+
+        let filtered = [...pandals];
+
+    // Only apply filters if any filter is active    
+
+    const hasActiveFilters = searchTerm ||     // Only apply filters if any filter is active
+
+                           filters.area ||     const hasActiveFilters = searchTerm || 
+
+                           filters.theme ||                            filters.area || 
+
+                           filters.crowdLevel ||                            filters.theme || 
+
+                           (filters.distance && userLocation);                           filters.crowdLevel || 
+
+                           (filters.distance && userLocation);
+
+    if (!hasActiveFilters) {
+
+      setFilteredPandals(filtered);    if (!hasActiveFilters) {
+
+      return;      setFilteredPandals(filtered);
+
+    }      return;
+
+    }
+
+    if (searchTerm) {
+
+      const searchLower = searchTerm.toLowerCase();    if (searchTerm) {
+
+      filtered = filtered.filter(p =>       const searchLower = searchTerm.toLowerCase();
+
+        p.name.toLowerCase().includes(searchLower) ||      filtered = filtered.filter(p => 
+
+        p.location.toLowerCase().includes(searchLower) ||        p.name.toLowerCase().includes(searchLower) ||
+
+        p.theme?.toLowerCase().includes(searchLower) ||        p.location.toLowerCase().includes(searchLower) ||
+
+        p.area?.toLowerCase().includes(searchLower)        p.theme?.toLowerCase().includes(searchLower) ||
+
+      );        p.area?.toLowerCase().includes(searchLower)
+
+    }      );
+
+    }
+
+    if (filters.area) {
+
+      filtered = filtered.filter(p =>     if (filters.area) {
+
+        p.area?.toLowerCase() === filters.area.toLowerCase()      filtered = filtered.filter(p => 
+
+      );        p.area?.toLowerCase() === filters.area.toLowerCase()
+
+    }      );
+
+    }
+
+    if (filters.theme) {
+
+      filtered = filtered.filter(p =>     if (filters.theme) {
+
+        p.theme?.toLowerCase() === filters.theme.toLowerCase()      filtered = filtered.filter(p => 
+
+      );        p.theme?.toLowerCase() === filters.theme.toLowerCase()
+
+    }      );
+
+    }
+
+    if (filters.crowdLevel) {
+
+      filtered = filtered.filter(p =>     if (filters.crowdLevel) {
+
+        p.crowdLevel === filters.crowdLevel      filtered = filtered.filter(p => 
+
+      );        p.crowdLevel === filters.crowdLevel
+
+    }      );
+
+    }
+
+    if (filters.distance && userLocation) {
+
+      filtered = filtered.filter(p => {    if (filters.distance && userLocation) {
+
+        const distance = calculateDistance(      filtered = filtered.filter(p => {
+
+          userLocation.lat,        const distance = calculateDistance(
+
+          userLocation.lng,          userLocation.lat,
+
+          p.coordinates.lat,          userLocation.lng,
+
+          p.coordinates.lng          p.coordinates.lat,
+
+        );          p.coordinates.lng
+
+        return distance <= parseInt(filters.distance);        );
+
+      });        return distance <= parseInt(filters.distance);
+
+    }      });
+
+    }
+
+    setFilteredPandals(filtered);
+
+    setCurrentPage(1); // Reset to first page when filters change    setFilteredPandals(filtered);
+
+  }, [searchTerm, filters, pandals, userLocation, calculateDistance]);    setCurrentPage(1); // Reset to first page when filters change
+
+  }, [searchTerm, filters, pandals, userLocation, calculateDistance]);
+
+  const detectLocation = useCallback(() => {
+
+    if (navigator.geolocation) {  const detectLocation = useCallback(() => {
+
+      navigator.geolocation.getCurrentPosition(    if (navigator.geolocation) {
+
+        (position) => {      navigator.geolocation.getCurrentPosition(
+
+          const newLocation = {        (position) => {
+
+            lat: position.coords.latitude,          const newLocation = {
+
+            lng: position.coords.longitude            lat: position.coords.latitude,
+
+          };            lng: position.coords.longitude
+
+          setUserLocation(newLocation);          };
+
+          sortPandalsByDistance(newLocation.lat, newLocation.lng);          setUserLocation(newLocation);
+
+        },          sortPandalsByDistance(newLocation.lat, newLocation.lng);
+
+        (error) => {        },
+
+          console.error('Error getting location:', error);        (error) => {
+
+          alert('Unable to get your location. Please enable location services.');          console.error('Error getting location:', error);
+
+        }          alert('Unable to get your location. Please enable location services.');
+
+      );        }
+
+    } else {      );
+
+      alert('Geolocation is not supported by your browser.');    } else {
+
+    }      alert('Geolocation is not supported by your browser.');
+
+  }, [sortPandalsByDistance]);    }
+
+  }, [sortPandalsByDistance]);
+
+  const fetchPandals = useCallback(async () => {
+
+    try {  const fetchPandals = useCallback(async () => {
+
+      const response = await fetch('http://localhost:5000/api/pandals');    try {
+
+      const data = await response.json();      const response = await fetch('http://localhost:5000/api/pandals');
+
+      setPandals(data);      const data = await response.json();
+
+      setFilteredPandals(data);      setPandals(data);
+
+    } catch (error) {      setFilteredPandals(data);
+
+      console.error('Error fetching pandals:', error);    } catch (error) {
+
+    }      console.error('Error fetching pandals:', error);
+
+  }, []);    }
+
+  }, []);
+
+  // Set initial filtered pandals when pandals are fetched
+
+  useEffect(() => {  // Effects
+
+    fetchPandals();  useEffect(() => {
+
+  }, [fetchPandals]);    fetchPandals();
+
+  }, [fetchPandals]);
+
+  // Only apply filters when user actively changes them
+
+  useEffect(() => {  // Set initial filtered pandals when pandals are fetched
+
+    if (searchTerm || filters.area || filters.theme || filters.crowdLevel || (filters.distance && userLocation)) {  useEffect(() => {
+
+      applyFiltersAndSearch();    if (pandals.length > 0) {
+
+    }      setFilteredPandals(pandals); // Show all pandals by default
+
+  }, [searchTerm, filters, userLocation, applyFiltersAndSearch]);    }
+
+  }, [pandals]);
+
+  return (
+
+    <>  // Only apply filters when user actively changes them
+
+      <div className="bg-light py-3 mb-4 border-bottom">  useEffect(() => {
+
+        <Container>    if (searchTerm || filters.area || filters.theme || filters.crowdLevel || (filters.distance && userLocation)) {
+
+          <Row className="align-items-center">      applyFiltersAndSearch();
+
+            <Col md={8}>    }
+
+              <Form.Control  }, [searchTerm, filters, userLocation, applyFiltersAndSearch]);
+
+                type="search"
+
+                placeholder="Search pandals by name, location, or theme..."  return (
+
+                value={searchTerm}    <>
+
+                onChange={(e) => setSearchTerm(e.target.value)}      <div className="bg-light py-3 mb-4 border-bottom">
+
+                className="mb-0"        <Container>
+
+              />          <Row className="align-items-center">
+
+            </Col>            <Col md={8}>
+
+            <Col md={4}>              <Form.Control
+
+              <Button                 type="search"
+
+                variant="primary"                 placeholder="Search pandals by name, location, or theme..."
+
+                onClick={detectLocation}                value={searchTerm}
+
+                className="w-100"                onChange={(e) => setSearchTerm(e.target.value)}
+
+              >                className="mb-0"
+
+                <i className="bi bi-geo-alt"></i> Detect My Location              />
+
+              </Button>            </Col>
+
+            </Col>            <Col md={4}>
+
+          </Row>              <Button 
+
+        </Container>                variant="primary" 
+
+      </div>                onClick={detectLocation}
+
+                className="w-100"
+
+      <Container>              >
+
+        <div className="d-flex align-items-center mb-4">                <i className="bi bi-geo-alt"></i> Detect My Location
+
+          <h4 className="mb-0 me-4">All Pandals</h4>              </Button>
+
+          <div className="d-flex gap-2 flex-wrap">            </Col>
+
+            <Form.Select          </Row>
+
+              size="sm"        </Container>
+
+              value={filters.area}      </div>
+
+              onChange={(e) => setFilters({...filters, area: e.target.value})}
+
+              style={{ width: 'auto' }}      <Container>
+
+            >        <div className="d-flex align-items-center mb-4">
+
+              <option value="">All Areas</option>          <h4 className="mb-0 me-4">All Pandals</h4>
+
+              <option value="South Mumbai">South Mumbai</option>          <div className="d-flex gap-2 flex-wrap">
+
+              <option value="Central Mumbai">Central Mumbai</option>            <Form.Select
+
+              <option value="Western Suburbs">Western Suburbs</option>              size="sm"
+
+              <option value="Eastern Suburbs">Eastern Suburbs</option>              value={filters.area}
+
+              <option value="Navi Mumbai">Navi Mumbai</option>              onChange={(e) => setFilters({...filters, area: e.target.value})}
+
+              <option value="Thane">Thane</option>              style={{ width: 'auto' }}
+
+            </Form.Select>            >
+
+              <option value="">All Areas</option>
+
+            <Form.Select              <option value="South Mumbai">South Mumbai</option>
+
+              size="sm"              <option value="Central Mumbai">Central Mumbai</option>
+
+              value={filters.theme}              <option value="Western Suburbs">Western Suburbs</option>
+
+              onChange={(e) => setFilters({...filters, theme: e.target.value})}              <option value="Eastern Suburbs">Eastern Suburbs</option>
+
+              style={{ width: 'auto' }}              <option value="Navi Mumbai">Navi Mumbai</option>
+
+            >              <option value="Thane">Thane</option>
+
+              <option value="">All Themes</option>            </Form.Select>
+
+              <option value="Traditional">Traditional</option>
+
+              <option value="Eco-Friendly">Eco-Friendly</option>            <Form.Select
+
+              <option value="Modern">Modern</option>              size="sm"
+
+            </Form.Select>              value={filters.theme}
+
+              onChange={(e) => setFilters({...filters, theme: e.target.value})}
+
+            <Form.Select              style={{ width: 'auto' }}
+
+              size="sm"            >
+
+              value={filters.crowdLevel}              <option value="">All Themes</option>
+
+              onChange={(e) => setFilters({...filters, crowdLevel: e.target.value})}              <option value="Traditional">Traditional</option>
+
+              style={{ width: 'auto' }}              <option value="Eco-Friendly">Eco-Friendly</option>
+
+            >              <option value="Modern">Modern</option>
+
+              <option value="">Any Crowd Level</option>            </Form.Select>
+
+              <option value="Low">Low</option>
+
+              <option value="Medium">Medium</option>            <Form.Select
+
+              <option value="High">High</option>              size="sm"
+
+            </Form.Select>              value={filters.crowdLevel}
+
+              onChange={(e) => setFilters({...filters, crowdLevel: e.target.value})}
+
+            <Form.Select              style={{ width: 'auto' }}
+
+              size="sm"            >
+
+              value={filters.distance}              <option value="">Any Crowd Level</option>
+
+              onChange={(e) => setFilters({...filters, distance: e.target.value})}              <option value="Low">Low</option>
+
+              style={{ width: 'auto' }}              <option value="Medium">Medium</option>
+
+              disabled={!userLocation}              <option value="High">High</option>
+
+            >            </Form.Select>
+
+              <option value="">Any Distance</option>
+
+              <option value="1">Within 1 km</option>            <Form.Select
+
+              <option value="3">Within 3 km</option>              size="sm"
+
+              <option value="5">Within 5 km</option>              value={filters.distance}
+
+              <option value="10">Within 10 km</option>              onChange={(e) => setFilters({...filters, distance: e.target.value})}
+
+            </Form.Select>              style={{ width: 'auto' }}
+
+          </div>              disabled={!userLocation}
+
+        </div>            >
+
+              <option value="">Any Distance</option>
+
+        <PandalGrid               <option value="1">Within 1 km</option>
+
+          pandals={filteredPandals}              <option value="3">Within 3 km</option>
+
+          userLocation={userLocation}              <option value="5">Within 5 km</option>
+
+          calculateDistance={calculateDistance}              <option value="10">Within 10 km</option>
+
+          currentPage={currentPage}            </Form.Select>
+
+          setCurrentPage={setCurrentPage}          </div>
+
+          itemsPerPage={itemsPerPage}        </div>
+
+          setItemsPerPage={setItemsPerPage}
+
+        />        <PandalGrid 
+
+      </Container>          pandals={filteredPandals}
+
+    </>          userLocation={userLocation}
+
+  );          calculateDistance={calculateDistance}
+
+};          currentPage={currentPage}
+
+          setCurrentPage={setCurrentPage}
+
+export default ExplorePanel;          itemsPerPage={itemsPerPage}
+          setItemsPerPage={setItemsPerPage}
+        />
+      </Container>
+    </>
+  );
+
+      <PandalGrid 
+        pandals={filteredPandals}
+        userLocation={userLocation}
+        calculateDistance={calculateDistance}
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        itemsPerPage={itemsPerPage}
+        setItemsPerPage={setItemsPerPage}
+      />
+    </Container>
+  );
+};
+
+export default ExplorePanel;
