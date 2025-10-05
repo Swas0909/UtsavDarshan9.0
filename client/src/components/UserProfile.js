@@ -1,74 +1,123 @@
-import React from 'react';
-import { Container, Card, Button, Form } from 'react-bootstrap';
+import React, { useEffect } from 'react';
+import { Container, Card, Button, Alert, Badge } from 'react-bootstrap';
+import { useNavigate, Link } from 'react-router-dom';
+import Login from './Login';
 
 function UserProfile() {
-  const [user, setUser] = React.useState({
-    name: 'John Doe',
-    email: 'john@example.com',
-    favoritePandals: [
-      {
-        id: 1,
-        name: 'Lalbaugcha Raja',
-        lastVisited: '2025-09-21'
-      },
-      {
-        id: 2,
-        name: 'GSB Seva Mandal',
-        lastVisited: '2025-09-22'
-      }
-    ]
-  });
+  const [user, setUser] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
+  const navigate = useNavigate();
 
-  const handleUpdateProfile = (e) => {
-    e.preventDefault();
-    // Handle profile update logic here
-    console.log('Profile update requested');
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  async function fetchUserProfile() {
+    try {
+      const response = await fetch('http://localhost:5000/api/current-user', {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data);
+      } else {
+        navigate('/login');
+      }
+    } catch (err) {
+      setError('Failed to fetch user profile');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        // Clear any local user data
+        setUser(null);
+        // Redirect to login page
+        navigate('/login');
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Failed to logout');
+      }
+    } catch (err) {
+      setError('Failed to logout. Please try again.');
+    }
   };
+
+  if (loading) {
+    return (
+      <Container className="py-4">
+        <p>Loading...</p>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container className="py-4">
+        <Alert variant="danger">{error}</Alert>
+      </Container>
+    );
+  }
+
+  if (!user) {
+    return <Login />;
+  }
 
   return (
     <Container className="py-4">
-      <h2 className="mb-4">User Profile</h2>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2>User Profile</h2>
+        <Button variant="outline-danger" onClick={handleLogout}>
+          Logout
+        </Button>
+      </div>
       
       <Card className="mb-4">
         <Card.Body>
-          <Form onSubmit={handleUpdateProfile}>
-            <Form.Group className="mb-3">
-              <Form.Label>Name</Form.Label>
-              <Form.Control 
-                type="text" 
-                value={user.name}
-                onChange={(e) => setUser({...user, name: e.target.value})}
+          <div className="d-flex align-items-center mb-4">
+            <div 
+              className="rounded-circle overflow-hidden me-3" 
+              style={{ width: '100px', height: '100px' }}
+            >
+              <img 
+                src={user.profile_picture || '/images/default-profile.svg'} 
+                alt={user.display_name}
+                className="w-100 h-100 object-fit-cover"
               />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Email</Form.Label>
-              <Form.Control 
-                type="email" 
-                value={user.email}
-                onChange={(e) => setUser({...user, email: e.target.value})}
-              />
-            </Form.Group>
-
-            <Button variant="primary" type="submit">
-              Update Profile
-            </Button>
-          </Form>
+            </div>
+            <div>
+              <h3 className="mb-2">{user.display_name}</h3>
+              <p className="text-muted mb-0">
+                <i className="bi bi-envelope me-2"></i>
+                {user.email}
+              </p>
+              {user.is_admin && (
+                <Badge bg="primary" className="mt-2">Admin</Badge>
+              )}
+            </div>
+          </div>
         </Card.Body>
       </Card>
 
-      <h3 className="mb-3">Favorite Pandals</h3>
-      {user.favoritePandals.map(pandal => (
-        <Card key={pandal.id} className="mb-2">
-          <Card.Body>
-            <Card.Title>{pandal.name}</Card.Title>
-            <Card.Text>Last visited: {pandal.lastVisited}</Card.Text>
-            <Button variant="outline-danger" size="sm">
-              Remove from Favorites
-            </Button>
-          </Card.Body>
-        </Card>
-      ))}
+      {user.is_admin && (
+        <div className="mb-4">
+          <Button as={Link} to="/admin" variant="primary">
+            Go to Admin Dashboard
+          </Button>
+        </div>
+      )}
     </Container>
   );
 }

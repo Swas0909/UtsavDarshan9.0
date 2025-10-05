@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
+import PandalRegistrationModal from './PandalRegistrationModal';
 import { Link } from 'react-router-dom';
 
 function Home() {
   const [featuredPandals, setFeaturedPandals] = useState([]);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
 
   useEffect(() => {
     const fetchFeaturedPandals = async () => {
@@ -91,6 +93,12 @@ function Home() {
           </Button>
         </Col>
       </Row>
+
+      {/* Registration Modal */}
+      <PandalRegistrationModal
+        show={showRegisterModal}
+        onHide={() => setShowRegisterModal(false)}
+      />
     </Container>
   );
 }
