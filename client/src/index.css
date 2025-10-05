@@ -1,13 +1,190 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap');
+
+/* Import theme variables and components */
+@import './theme.css';
+
+/* Reset and base styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: var(--neutral-800);
+  background-color: var(--neutral-50);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: var(--font-mono);
+  background: var(--neutral-100);
+  padding: 0.125rem 0.25rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875em;
+}
+
+/* Smooth transitions for all interactive elements */
+*, *::before, *::after {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Remove default button styles */
+button {
+  border: none;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Link styles */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+/* Focus styles for accessibility */
+:focus-visible {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--neutral-100);
+  border-radius: var(--radius);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--neutral-300);
+  border-radius: var(--radius);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--neutral-400);
+}
+
+/* Selection styles */
+::selection {
+  background: var(--primary-200);
+  color: var(--primary-800);
+}
+
+/* Image optimization */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Container max-width */
+.container {
+  max-width: 1200px;
+}
+
+.container-fluid {
+  max-width: 100%;
+}
+
+/* Text utilities */
+.text-primary-modern {
+  color: var(--primary-600) !important;
+}
+
+.text-secondary-modern {
+  color: var(--secondary-600) !important;
+}
+
+.text-muted-modern {
+  color: var(--neutral-500) !important;
+}
+
+.text-gold {
+  color: var(--gold-600) !important;
+}
+
+/* Background utilities */
+.bg-primary-modern {
+  background-color: var(--primary-500) !important;
+}
+
+.bg-secondary-modern {
+  background-color: var(--secondary-500) !important;
+}
+
+.bg-gradient-primary {
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%) !important;
+}
+
+.bg-gradient-secondary {
+  background: linear-gradient(135deg, var(--secondary-500) 0%, var(--secondary-600) 100%) !important;
+}
+
+/* Border utilities */
+.border-primary-modern {
+  border-color: var(--primary-200) !important;
+}
+
+.border-secondary-modern {
+  border-color: var(--secondary-200) !important;
+}
+
+/* Modern spacing utilities */
+.p-modern {
+  padding: var(--space-4);
+}
+
+.px-modern {
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+
+.py-modern {
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-4);
+}
+
+.m-modern {
+  margin: var(--space-4);
+}
+
+.mx-modern {
+  margin-left: var(--space-4);
+  margin-right: var(--space-4);
+}
+
+.my-modern {
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+/* Loading states */
+.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.loading * {
+  cursor: wait !important;
 }

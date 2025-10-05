@@ -1,50 +1,370 @@
+/* UtsavDarshan App Styles - Modern Design System */
+
 .App {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: var(--neutral-50);
 }
 
+/* Navbar Brand - Modern Typography */
 .navbar-brand {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #ff4d4d !important;
+  font-family: var(--font-serif) !important;
+  font-size: 1.75rem !important;
+  font-weight: 700 !important;
+  background: linear-gradient(135deg, var(--primary-500), var(--gold-500)) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  text-decoration: none !important;
 }
 
+/* Home Container - Modern Spacing */
 .home-container {
-  padding: 2rem 0;
+  padding: var(--space-16) 0;
 }
 
+/* Pandal Cards - Modern Design */
 .pandal-card {
-  margin-bottom: 2rem;
-  transition: transform 0.3s ease;
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--neutral-100);
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: var(--space-8);
 }
 
 .pandal-card:hover {
-  transform: translateY(-5px);
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-6px);
+  border-color: var(--neutral-200);
 }
 
-.pandal-image {
-  height: 200px;
+.pandal-card .card-img-top {
+  transition: transform 0.3s ease;
+  aspect-ratio: 16/10;
   object-fit: cover;
 }
 
-.explore-more-btn {
-  margin: 2rem 0;
+.pandal-card:hover .card-img-top {
+  transform: scale(1.05);
 }
 
+.pandal-card .card-body {
+  padding: var(--space-6);
+}
+
+.pandal-card .card-title {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: var(--neutral-900);
+  margin-bottom: var(--space-2);
+}
+
+.pandal-card .card-text {
+  color: var(--neutral-600);
+  line-height: 1.5;
+  margin-bottom: var(--space-4);
+}
+
+/* Pandal Image - Modern Aspect Ratio */
+.pandal-image {
+  height: 250px;
+  object-fit: cover;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+/* Modern Button Styles */
+.explore-more-btn {
+  margin: var(--space-12) 0;
+  text-align: center;
+}
+
+.btn-explore {
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-8);
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.btn-explore:hover {
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+  color: white;
+  text-decoration: none;
+}
+
+/* Modern Footer */
 .footer {
   margin-top: auto;
-  padding: 2rem 0;
-  background-color: #f8f9fa;
+  padding: var(--space-16) 0 var(--space-8);
+  background: linear-gradient(135deg, var(--neutral-900) 0%, var(--neutral-800) 100%);
+  color: var(--neutral-200);
+  position: relative;
 }
 
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 25% 25%, var(--pattern-gold) 1px, transparent 1px),
+    radial-gradient(circle at 75% 75%, var(--pattern-primary) 1px, transparent 1px);
+  background-size: 40px 40px, 35px 35px;
+  opacity: 0.1;
+}
+
+.footer .container {
+  position: relative;
+  z-index: 1;
+}
+
+.footer h5 {
+  color: white;
+  font-weight: 600;
+  margin-bottom: var(--space-4);
+}
+
+.footer p, .footer li {
+  color: var(--neutral-300);
+  line-height: 1.6;
+}
+
+.footer a {
+  color: var(--neutral-300);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer a:hover {
+  color: var(--primary-400);
+}
+
+/* Feedback Form - Modern Design */
 .feedback-form {
-  max-width: 500px;
+  max-width: 600px;
   margin: 0 auto;
+  background: white;
+  padding: var(--space-8);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--neutral-100);
 }
 
+.feedback-form h3 {
+  font-family: var(--font-serif);
+  color: var(--neutral-900);
+  margin-bottom: var(--space-6);
+  text-align: center;
+}
+
+.feedback-form .form-control {
+  border: 2px solid var(--neutral-200);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  transition: all 0.2s ease;
+  background: white;
+  margin-bottom: var(--space-4);
+}
+
+.feedback-form .form-control:focus {
+  border-color: var(--primary-400);
+  box-shadow: 0 0 0 3px var(--primary-50);
+  outline: none;
+}
+
+.feedback-form .btn {
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-6);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.feedback-form .btn:hover {
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+  transform: translateY(-1px);
+}
+
+/* Map Container - Modern Design */
 .map-container {
   height: 70vh;
   width: 100%;
-  margin: 2rem 0;
+  margin: var(--space-8) 0;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--neutral-200);
+}
+
+/* Hero Section */
+.hero-section {
+  background: linear-gradient(135deg, var(--primary-50) 0%, var(--secondary-50) 100%);
+  padding: var(--space-20) 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 80%, var(--pattern-gold) 1px, transparent 1px),
+    radial-gradient(circle at 80% 20%, var(--pattern-primary) 1px, transparent 1px),
+    radial-gradient(circle at 40% 40%, var(--pattern-secondary) 1px, transparent 1px);
+  background-size: 30px 30px, 25px 25px, 35px 35px;
+  opacity: 0.4;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.hero-title {
+  font-family: var(--font-serif);
+  font-size: 3.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--neutral-900);
+  margin-bottom: var(--space-6);
+}
+
+.hero-subtitle {
+  font-size: 1.25rem;
+  color: var(--neutral-600);
+  margin-bottom: var(--space-8);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Modern Search Section */
+.search-section {
+  background: white;
+  padding: var(--space-6) 0;
+  border-bottom: 1px solid var(--neutral-100);
+  box-shadow: var(--shadow-sm);
+}
+
+.search-container-modern {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Filter Section */
+.filter-section {
+  background: var(--neutral-50);
+  padding: var(--space-6) 0;
+  border-bottom: 1px solid var(--neutral-100);
+}
+
+.filter-container {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-title {
+  font-weight: 600;
+  color: var(--neutral-800);
+  margin-right: var(--space-4);
+  white-space: nowrap;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2.5rem;
+  }
+  
+  .hero-section {
+    padding: var(--space-12) 0;
+  }
+  
+  .pandal-card {
+    margin-bottom: var(--space-6);
+  }
+  
+  .filter-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-4);
+  }
+  
+  .filter-title {
+    margin-right: 0;
+    margin-bottom: var(--space-2);
+  }
+}
+
+/* Loading States */
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid var(--neutral-200);
+  border-top: 2px solid var(--primary-500);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Modern Alert/Toast Styles */
+.alert-modern {
+  border-radius: var(--radius-md);
+  border: none;
+  padding: var(--space-4) var(--space-6);
+  margin-bottom: var(--space-4);
+}
+
+.alert-success-modern {
+  background: #dcfce7;
+  color: #166534;
+  border-left: 4px solid #22c55e;
+}
+
+.alert-error-modern {
+  background: #fef2f2;
+  color: #dc2626;
+  border-left: 4px solid #ef4444;
+}
+
+.alert-info-modern {
+  background: var(--secondary-50);
+  color: var(--secondary-800);
+  border-left: 4px solid var(--secondary-500);
 }

@@ -14,6 +14,7 @@ import Footer from './components/Footer';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import './App.css';
+import './theme.css';
 
 function App() {
   const [pandals, setPandals] = useState([]);
