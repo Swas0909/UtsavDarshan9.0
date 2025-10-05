@@ -10,7 +10,7 @@ const pool = new Pool({
   port: "9000"
 });
 
-const ADMIN_EMAILS = ['amolwfh20@gmail.com', 'medhajjagtap@gmail.com'];
+const ADMIN_EMAILS = ['amolwfh20@gmail.com', 'medhajjagtap@gmail.com', 'jagtapmanish146@gmail.com'];
 
 passport.serializeUser((user, done) => {
   done(null, user.id);

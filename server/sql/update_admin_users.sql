@@ -1,0 +1,1 @@
+UPDATE users SET is_admin = true WHERE email IN ('amolwfh20@gmail.com', 'jagtapmanish146@gmail.com');
