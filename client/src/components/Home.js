@@ -12,11 +12,37 @@ function Home() {
       try {
         const response = await fetch('http://localhost:5000/api/pandals');
         const data = await response.json();
-        // Get top 3 highest rated pandals
-        const topPandals = data
-          .sort((a, b) => b.rating - a.rating)
-          .slice(0, 3);
-        setFeaturedPandals(topPandals);
+        
+        // Define our featured pandal IDs (Lalbaugcha Raja, GSB Seva Mandal, and Chinchpokli Chintamani)
+        const featuredIds = [1, 2, 3]; // These should match your database IDs
+        
+        // Filter pandals by these IDs and ensure they exist
+        const selectedPandals = featuredIds
+          .map(id => data.find(p => p.id === id))
+          .filter(p => p !== undefined);
+        
+        // If we don't have exactly 3 pandals, fall back to top rated ones
+        if (selectedPandals.length !== 3) {
+          console.log('Falling back to top rated pandals');
+          // Remove duplicates and sort by rating
+          const uniquePandals = Array.from(new Map(data.map(item => [item.id, item])).values());
+          const sortedPandals = uniquePandals
+            .sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating))
+            .filter(p => 
+              // Ensure pandals are different by checking name and location
+              !selectedPandals.some(sp => 
+                sp.name === p.name || 
+                sp.location === p.location
+              )
+            )
+            .slice(0, 3 - selectedPandals.length);
+            
+          selectedPandals.push(...sortedPandals);
+        }
+        
+        // Sort by rating to show highest rated first
+        selectedPandals.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
+        setFeaturedPandals(selectedPandals);
       } catch (error) {
         console.error('Error fetching featured pandals:', error);
       }

@@ -1,0 +1,759 @@
+import React, { useCallback, useState, useEffect } from 'react';import React, { useCallback, useState, useEffect } from 'react';
+
+import { Container, Row, Col, Card, Badge, Button, DropdownButton, Dropdown } from 'react-bootstrap';import { Container, Row, Col, Card, Badge, Button, DropdownButton, Dropdown } from 'react-bootstrap';
+
+import Reviews from './Reviews';import Reviews from './Reviews';
+
+import { useParams } from 'react-router-dom';import { useParams } from 'react-router-dom';
+
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+
+              
+
+const PandalDetail = () => {              <div className="d-flex gap-2 mb-3">
+
+  const { id } = useParams();                <DropdownButton
+
+  const [pandal, setPandal] = useState(null);                  id="visit-status"
+
+  const [userLocation, setUserLocation] = useState(null);                  title={
+
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);                    <span>
+
+  const [isFavorite, setIsFavorite] = useState(false);                      <i className={`bi ${visitStatus === 'visited' ? 'bi-check-circle-fill' : 
+
+  const [isAuthenticated, setIsAuthenticated] = useState(false);                        visitStatus === 'want_to_visit' ? 'bi-bookmark-fill' : 'bi-circle'} me-2`}></i>
+
+  const [visitStatus, setVisitStatus] = useState(null);                      {visitStatus === 'visited' ? 'Visited' : 
+
+  const [visitLoading, setVisitLoading] = useState(false);                       visitStatus === 'want_to_visit' ? 'Want to Visit' : 'Mark as...'}
+
+                    </span>
+
+  const fetchPandalDetails = useCallback(async () => {                  }
+
+    try {                  variant={visitStatus === 'visited' ? 'success' : 
+
+      const response = await fetch(`http://localhost:5000/api/pandals/${id}`);                          visitStatus === 'want_to_visit' ? 'info' : 'outline-secondary'}
+
+      const data = await response.json();                  className="w-100"
+
+      setPandal(data);                >
+
+    } catch (error) {                  <Dropdown.Item 
+
+      console.error('Error fetching pandal details:', error);                    onClick={() => handleVisitStatusChange('visited')}
+
+    }                    active={visitStatus === 'visited'}
+
+  }, [id]);                  >
+
+                    <i className="bi bi-check-circle-fill me-2"></i>
+
+  const handleVisitStatusChange = async (newStatus) => {                    Visited
+
+    if (!isAuthenticated) {                  </Dropdown.Item>
+
+      window.location.href = '/login';                  <Dropdown.Item 
+
+      return;                    onClick={() => handleVisitStatusChange('want_to_visit')}
+
+    }                    active={visitStatus === 'want_to_visit'}
+
+                      >
+
+    setVisitLoading(true);                    <i className="bi bi-bookmark-fill me-2"></i>
+
+    try {                    Want to Visit
+
+      const response = await fetch(`http://localhost:5000/api/visit-preferences/${id}`, {                  </Dropdown.Item>
+
+        method: 'POST',                  {visitStatus && (
+
+        credentials: 'include',                    <>
+
+        headers: {                      <Dropdown.Divider />
+
+          'Content-Type': 'application/json'                      <Dropdown.Item 
+
+        },                        onClick={() => handleVisitStatusChange(null)}
+
+        body: JSON.stringify({ status: newStatus })                        className="text-danger"
+
+      });                      >
+
+                              <i className="bi bi-x-circle me-2"></i>
+
+      if (response.ok) {                        Remove Status
+
+        setVisitStatus(newStatus);                      </Dropdown.Item>
+
+      }                    </>
+
+    } catch (error) {                  )}
+
+      console.error('Error updating visit status:', error);                </DropdownButton>
+
+    } finally {              </div>
+
+      setVisitLoading(false);
+
+    }              <button 
+
+  };                onClick={getUserLocation}
+
+                disabled={isLoadingLocation}
+
+  const fetchVisitStatus = async () => {                className="btn btn-primary w-100 mt-3"
+
+    try {              >'react-router-dom';
+
+      const response = await fetch(`http://localhost:5000/api/visit-preferences/${id}`, {import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+
+        credentials: 'include'
+
+      });const PandalDetail = () => {
+
+      if (response.ok) {  const { id } = useParams();
+
+        const data = await response.json();  const [pandal, setPandal] = useState(null);
+
+        setVisitStatus(data.status);  const [userLocation, setUserLocation] = useState(null);
+
+      }  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+
+    } catch (error) {  const [isFavorite, setIsFavorite] = useState(false);
+
+      console.error('Error fetching visit status:', error);  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+    }  const [visitStatus, setVisitStatus] = useState(null);
+
+  };  const [visitLoading, setVisitLoading] = useState(false);
+
+  const [visitStatus, setVisitStatus] = useState(null);
+
+  const getUserLocation = useCallback(() => {  const [visitLoading, setVisitLoading] = useState(false);
+
+    setIsLoadingLocation(true);
+
+    if (navigator.geolocation) {  const fetchPandalDetails = useCallback(async () => {
+
+      const geolocationOptions = {    try {
+
+        enableHighAccuracy: true,      const response = await fetch(`http://localhost:5000/api/pandals/${id}`);
+
+        timeout: 10000,      const data = await response.json();
+
+        maximumAge: 0      setPandal(data);
+
+      };    } catch (error) {
+
+      console.error('Error fetching pandal details:', error);
+
+      navigator.geolocation.getCurrentPosition(    }
+
+        (position) => {  }, [id]);
+
+          setUserLocation({
+
+            lat: position.coords.latitude,  const getUserLocation = useCallback(() => {
+
+            lng: position.coords.longitude    setIsLoadingLocation(true);
+
+          });    if (navigator.geolocation) {
+
+          setIsLoadingLocation(false);      const geolocationOptions = {
+
+        enableHighAccuracy: true,
+
+          const userLat = position.coords.latitude.toFixed(6);        timeout: 10000,        // 10 second timeout
+
+          const userLng = position.coords.longitude.toFixed(6);        maximumAge: 0         // Don't use cached position
+
+          const pandalLat = parseFloat(pandal.coordinates.lat).toFixed(6);      };
+
+          const pandalLng = parseFloat(pandal.coordinates.lng).toFixed(6);
+
+      navigator.geolocation.getCurrentPosition(
+
+          const url = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${pandalLat},${pandalLng}&travelmode=driving`;        (position) => {
+
+          window.open(url, '_blank');          console.log('Location obtained:', position.coords); // Debug log
+
+        },          setUserLocation({
+
+        (error) => {            lat: position.coords.latitude,
+
+          setIsLoadingLocation(false);            lng: position.coords.longitude
+
+          console.error('Geolocation error:', error);          });
+
+                    setIsLoadingLocation(false);
+
+          switch(error.code) {
+
+            case error.PERMISSION_DENIED:          // Format coordinates to 6 decimal places for accuracy
+
+              alert('Location permission denied. Please enable location services in your browser settings.');          const userLat = position.coords.latitude.toFixed(6);
+
+              break;          const userLng = position.coords.longitude.toFixed(6);
+
+            case error.POSITION_UNAVAILABLE:          const pandalLat = parseFloat(pandal.coordinates.lat).toFixed(6);
+
+              alert('Location information is unavailable. Please try again or check your device\'s GPS settings.');          const pandalLng = parseFloat(pandal.coordinates.lng).toFixed(6);
+
+              break;
+
+            case error.TIMEOUT:          // Open Google Maps with navigation directions
+
+              alert('Location request timed out. Please check your internet connection and try again.');          const url = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${pandalLat},${pandalLng}&travelmode=driving`;
+
+              break;          console.log('Navigation URL:', url); // Debug log
+
+            default:          window.open(url, '_blank');
+
+              alert('An unknown error occurred while getting your location. Please try again.');        },
+
+          }        (error) => {
+
+        },          setIsLoadingLocation(false);
+
+        geolocationOptions          console.error('Geolocation error:', error);
+
+      );          
+
+    } else {          // Provide specific error messages
+
+      setIsLoadingLocation(false);          switch(error.code) {
+
+      alert('Geolocation is not supported by your browser. Please use a modern browser with GPS support.');            case error.PERMISSION_DENIED:
+
+    }              alert('Location permission denied. Please enable location services in your browser settings.');
+
+  }, [pandal]);              break;
+
+            case error.POSITION_UNAVAILABLE:
+
+  useEffect(() => {              alert('Location information is unavailable. Please try again or check your device\'s GPS settings.');
+
+    fetchPandalDetails();              break;
+
+                case error.TIMEOUT:
+
+    const checkAuthAndFavorite = async () => {              alert('Location request timed out. Please check your internet connection and try again.');
+
+      try {              break;
+
+        const authResponse = await fetch('http://localhost:5000/api/current-user', {            default:
+
+          credentials: 'include'              alert('An unknown error occurred while getting your location. Please try again.');
+
+        });          }
+
+        if (authResponse.ok) {        },
+
+          setIsAuthenticated(true);        geolocationOptions
+
+          const favoriteResponse = await fetch(`http://localhost:5000/api/pandals/${id}/favorite`, {      );
+
+            credentials: 'include'    } else {
+
+          });      setIsLoadingLocation(false);
+
+          if (favoriteResponse.ok) {      alert('Geolocation is not supported by your browser. Please use a modern browser with GPS support.');
+
+            const { isFavorite } = await favoriteResponse.json();    }
+
+            setIsFavorite(isFavorite);  }, [pandal]);
+
+          }
+
+        }  const handleVisitStatusChange = async (newStatus) => {
+
+      } catch (error) {    if (!isAuthenticated) {
+
+        console.error('Error checking favorite status:', error);      window.location.href = '/login';
+
+      }      return;
+
+    };    }
+
+        
+
+    checkAuthAndFavorite();    setVisitLoading(true);
+
+    if (isAuthenticated) {    try {
+
+      fetchVisitStatus();      const response = await fetch(`http://localhost:5000/api/visit-preferences/${id}`, {
+
+    }        method: 'POST',
+
+  }, [fetchPandalDetails, id, isAuthenticated]);        credentials: 'include',
+
+        headers: {
+
+  if (!pandal) {          'Content-Type': 'application/json'
+
+    return <div>Loading...</div>;        },
+
+  }        body: JSON.stringify({ status: newStatus })
+
+      });
+
+  return (      
+
+    <Container className="py-4">      if (response.ok) {
+
+      <Row>        setVisitStatus(newStatus);
+
+        <Col md={8}>      }
+
+          <Card>    } catch (error) {
+
+            <Card.Img       console.error('Error updating visit status:', error);
+
+              variant="top"     } finally {
+
+              src={pandal.imageUrl}       setVisitLoading(false);
+
+              alt={pandal.name}    }
+
+              style={{ height: '400px', objectFit: 'cover' }}  };
+
+            />
+
+            <Card.Body>  const fetchVisitStatus = async () => {
+
+              <Card.Title className="h2">{pandal.name}</Card.Title>    try {
+
+              <div className="mb-3">      const response = await fetch(`http://localhost:5000/api/visit-preferences/${id}`, {
+
+                <Badge bg="primary" className="me-2">{pandal.theme}</Badge>        credentials: 'include'
+
+                <Badge bg={pandal.crowdLevel === 'High' ? 'danger' : pandal.crowdLevel === 'Medium' ? 'warning' : 'success'}>      });
+
+                  {pandal.crowdLevel} Crowd      if (response.ok) {
+
+                </Badge>        const data = await response.json();
+
+              </div>        setVisitStatus(data.status);
+
+              <Card.Text>      }
+
+                <h5>About</h5>    } catch (error) {
+
+                <p>{pandal.description}</p>      console.error('Error fetching visit status:', error);
+
+                    }
+
+                <h5>History</h5>  };
+
+                <p>{pandal.history}</p>
+
+                  useEffect(() => {
+
+                <h5>Location</h5>    fetchPandalDetails();
+
+                <p>{pandal.location}</p>    
+
+                    // Check auth status and favorite status
+
+                <h5>Visiting Hours</h5>    const fetchVisitStatus = async () => {
+
+                <p>{pandal.visitingHours}</p>    try {
+
+                      const response = await fetch(`http://localhost:5000/api/visit-preferences/${id}`, {
+
+                <h5>Established</h5>        credentials: 'include'
+
+                <p>{pandal.established}</p>      });
+
+                      if (response.ok) {
+
+                <h5>Special Features</h5>        const data = await response.json();
+
+                <ul>        setVisitStatus(data.status);
+
+                  {pandal.features?.map((feature, index) => (      }
+
+                    <li key={index}>{feature}</li>    } catch (error) {
+
+                  ))}      console.error('Error fetching visit status:', error);
+
+                </ul>    }
+
+  };
+
+                <Reviews pandalId={pandal.id} />
+
+              </Card.Text>  const handleVisitStatusChange = async (newStatus) => {
+
+            </Card.Body>    if (!isAuthenticated) {
+
+          </Card>      window.location.href = '/login';
+
+        </Col>      return;
+
+        <Col md={4}>    }
+
+          <Card className="mb-4">    
+
+            <Card.Body>    setVisitLoading(true);
+
+              <Card.Title className="d-flex justify-content-between align-items-center">    try {
+
+                Quick Info      const response = await fetch(`http://localhost:5000/api/visit-preferences/${id}`, {
+
+                <Button        method: 'POST',
+
+                  variant="link"        credentials: 'include',
+
+                  className="p-0 favorite-btn"        headers: {
+
+                  onClick={async () => {          'Content-Type': 'application/json'
+
+                    if (!isAuthenticated) {        },
+
+                      window.location.href = '/login';        body: JSON.stringify({ status: newStatus })
+
+                      return;      });
+
+                    }      
+
+                    try {      if (response.ok) {
+
+                      const response = await fetch(`http://localhost:5000/api/pandals/${id}/favorite`, {        setVisitStatus(newStatus);
+
+                        method: 'POST',      }
+
+                        credentials: 'include',    } catch (error) {
+
+                        headers: {      console.error('Error updating visit status:', error);
+
+                          'Content-Type': 'application/json'    } finally {
+
+                        },      setVisitLoading(false);
+
+                        body: JSON.stringify({ action: isFavorite ? 'remove' : 'add' })    }
+
+                      });  };
+
+                      if (response.ok) {
+
+                        setIsFavorite(!isFavorite);  const checkAuthAndFavorite = async () => {
+
+                      }      try {
+
+                    } catch (error) {        const authResponse = await fetch('http://localhost:5000/api/current-user', {
+
+                      console.error('Error updating favorite:', error);          credentials: 'include'
+
+                    }        });
+
+                  }}        if (authResponse.ok) {
+
+                >          setIsAuthenticated(true);
+
+                  <i className={`bi bi-heart${isFavorite ? '-fill text-danger' : ''}`} style={{ fontSize: '1.5rem' }}></i>          const favoriteResponse = await fetch(`http://localhost:5000/api/pandals/${id}/favorite`, {
+
+                </Button>            credentials: 'include'
+
+              </Card.Title>          });
+
+              <p><strong>Rating:</strong> {pandal.rating}/5</p>          if (favoriteResponse.ok) {
+
+              <p><strong>Best Time to Visit:</strong> {pandal.bestTimeToVisit}</p>            const { isFavorite } = await favoriteResponse.json();
+
+              <p><strong>Wheelchair Accessible:</strong> {pandal.wheelchairAccessible ? 'Yes' : 'No'}</p>            setIsFavorite(isFavorite);
+
+              <p><strong>Parking Available:</strong> {pandal.parkingAvailable ? 'Yes' : 'No'}</p>          }
+
+        }
+
+              <div className="d-flex gap-2 mb-3">      } catch (error) {
+
+                <DropdownButton        console.error('Error checking favorite status:', error);
+
+                  id="visit-status"      }
+
+                  title={    };
+
+                    <span>    
+
+                      <i className={`bi ${visitStatus === 'visited' ? 'bi-check-circle-fill' :     checkAuthAndFavorite();
+
+                        visitStatus === 'want_to_visit' ? 'bi-bookmark-fill' : 'bi-circle'} me-2`}></i>    if (isAuthenticated) {
+
+                      {visitStatus === 'visited' ? 'Visited' :       fetchVisitStatus();
+
+                       visitStatus === 'want_to_visit' ? 'Want to Visit' : 'Mark as...'}    }
+
+                    </span>  }, [fetchPandalDetails, id, isAuthenticated]);
+
+                  }
+
+                  variant={visitStatus === 'visited' ? 'success' :   if (!pandal) {
+
+                          visitStatus === 'want_to_visit' ? 'info' : 'outline-secondary'}    return <div>Loading...</div>;
+
+                  className="w-100"  }
+
+                  disabled={!isAuthenticated || visitLoading}
+
+                >  return (
+
+                  <Dropdown.Item     <Container className="py-4">
+
+                    onClick={() => handleVisitStatusChange('visited')}      <Row>
+
+                    active={visitStatus === 'visited'}        <Col md={8}>
+
+                  >          <Card>
+
+                    <i className="bi bi-check-circle-fill me-2"></i>            <Card.Img 
+
+                    Visited              variant="top" 
+
+                  </Dropdown.Item>              src={pandal.imageUrl} 
+
+                  <Dropdown.Item               alt={pandal.name}
+
+                    onClick={() => handleVisitStatusChange('want_to_visit')}              style={{ height: '400px', objectFit: 'cover' }}
+
+                    active={visitStatus === 'want_to_visit'}            />
+
+                  >            <Card.Body>
+
+                    <i className="bi bi-bookmark-fill me-2"></i>              <Card.Title className="h2">{pandal.name}</Card.Title>
+
+                    Want to Visit              <div className="mb-3">
+
+                  </Dropdown.Item>                <Badge bg="primary" className="me-2">{pandal.theme}</Badge>
+
+                  {visitStatus && (                <Badge bg={pandal.crowdLevel === 'High' ? 'danger' : pandal.crowdLevel === 'Medium' ? 'warning' : 'success'}>
+
+                    <>                  {pandal.crowdLevel} Crowd
+
+                      <Dropdown.Divider />                </Badge>
+
+                      <Dropdown.Item               </div>
+
+                        onClick={() => handleVisitStatusChange(null)}              <Card.Text>
+
+                        className="text-danger"                <h5>About</h5>
+
+                      >                <p>{pandal.description}</p>
+
+                        <i className="bi bi-x-circle me-2"></i>                
+
+                        Remove Status                <h5>History</h5>
+
+                      </Dropdown.Item>                <p>{pandal.history}</p>
+
+                    </>                
+
+                  )}                <h5>Location</h5>
+
+                </DropdownButton>                <p>{pandal.location}</p>
+
+              </div>                
+
+                <h5>Visiting Hours</h5>
+
+              <button                 <p>{pandal.visitingHours}</p>
+
+                onClick={getUserLocation}                
+
+                disabled={isLoadingLocation}                <h5>Established</h5>
+
+                className="btn btn-primary w-100 mt-3"                <p>{pandal.established}</p>
+
+              >                
+
+                {isLoadingLocation ? (                <h5>Special Features</h5>
+
+                  <>                <ul>
+
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>                  {pandal.features?.map((feature, index) => (
+
+                    Getting Precise Location...                    <li key={index}>{feature}</li>
+
+                  </>                  ))}
+
+                ) : (                </ul>
+
+                  <>
+
+                    <i className="bi bi-compass-fill me-2"></i>                <Reviews pandalId={pandal.id} />
+
+                    Start Navigation              </Card.Text>
+
+                  </>            </Card.Body>
+
+                )}          </Card>
+
+              </button>        </Col>
+
+            </Card.Body>        <Col md={4}>
+
+          </Card>          <Card className="mb-4">
+
+                      <Card.Body>
+
+          <Card>              <Card.Title className="d-flex justify-content-between align-items-center">
+
+            <Card.Body>                Quick Info
+
+              <Card.Title>Location Map</Card.Title>                <Button
+
+              <div style={{ height: '300px', width: '100%' }}>                  variant="link"
+
+                <MapContainer                   className="p-0 favorite-btn"
+
+                  center={[pandal.coordinates.lat, pandal.coordinates.lng]}                   onClick={async () => {
+
+                  zoom={15}                     if (!isAuthenticated) {
+
+                  style={{ height: '100%', width: '100%' }}                      window.location.href = '/login';
+
+                >                      return;
+
+                  <TileLayer                    }
+
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"                    try {
+
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'                      const response = await fetch(`http://localhost:5000/api/pandals/${id}/favorite`, {
+
+                  />                        method: 'POST',
+
+                  <Marker position={[pandal.coordinates.lat, pandal.coordinates.lng]}>                        credentials: 'include',
+
+                    <Popup>                        headers: {
+
+                      {pandal.name}                          'Content-Type': 'application/json'
+
+                    </Popup>                        },
+
+                  </Marker>                        body: JSON.stringify({ action: isFavorite ? 'remove' : 'add' })
+
+                </MapContainer>                      });
+
+              </div>                      if (response.ok) {
+
+            </Card.Body>                        setIsFavorite(!isFavorite);
+
+          </Card>                      }
+
+        </Col>                    } catch (error) {
+
+      </Row>                      console.error('Error updating favorite:', error);
+
+    </Container>                    }
+
+  );                  }}
+
+};                >
+
+                  <i className={`bi bi-heart${isFavorite ? '-fill text-danger' : ''}`} style={{ fontSize: '1.5rem' }}></i>
+
+export default PandalDetail;                </Button>
+              </Card.Title>
+              <p><strong>Rating:</strong> {pandal.rating}/5</p>
+              <p><strong>Best Time to Visit:</strong> {pandal.bestTimeToVisit}</p>
+              <p><strong>Wheelchair Accessible:</strong> {pandal.wheelchairAccessible ? 'Yes' : 'No'}</p>
+              <p><strong>Parking Available:</strong> {pandal.parkingAvailable ? 'Yes' : 'No'}</p>
+
+              <div className="d-flex gap-2 mb-3">
+                <DropdownButton
+                  id="visit-status"
+                  title={
+                    <span>
+                      <i className={`bi ${visitStatus === 'visited' ? 'bi-check-circle-fill' : 
+                        visitStatus === 'want_to_visit' ? 'bi-bookmark-fill' : 'bi-circle'} me-2`}></i>
+                      {visitStatus === 'visited' ? 'Visited' : 
+                       visitStatus === 'want_to_visit' ? 'Want to Visit' : 'Mark as...'}
+                    </span>
+                  }
+                  variant={visitStatus === 'visited' ? 'success' : 
+                          visitStatus === 'want_to_visit' ? 'info' : 'outline-secondary'}
+                  className="w-100"
+                  disabled={!isAuthenticated || visitLoading}
+                >
+                  <Dropdown.Item 
+                    onClick={() => handleVisitStatusChange('visited')}
+                    active={visitStatus === 'visited'}
+                  >
+                    <i className="bi bi-check-circle-fill me-2"></i>
+                    Visited
+                  </Dropdown.Item>
+                  <Dropdown.Item 
+                    onClick={() => handleVisitStatusChange('want_to_visit')}
+                    active={visitStatus === 'want_to_visit'}
+                  >
+                    <i className="bi bi-bookmark-fill me-2"></i>
+                    Want to Visit
+                  </Dropdown.Item>
+                  {visitStatus && (
+                    <>
+                      <Dropdown.Divider />
+                      <Dropdown.Item 
+                        onClick={() => handleVisitStatusChange(null)}
+                        className="text-danger"
+                      >
+                        <i className="bi bi-x-circle me-2"></i>
+                        Remove Status
+                      </Dropdown.Item>
+                    </>
+                  )}
+                </DropdownButton>
+              </div>
+
+              <button 
+                onClick={getUserLocation}
+                disabled={isLoadingLocation}
+                className="btn btn-primary w-100 mt-3"
+              >
+                {isLoadingLocation ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Getting Precise Location...
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-compass-fill me-2"></i>
+                    Start Navigation
+                  </>
+                )}
+              </button>
+            </Card.Body>
+          </Card>
+          
+          <Card>
+            <Card.Body>
+              <Card.Title>Location Map</Card.Title>
+              <div style={{ height: '300px', width: '100%' }}>
+                <MapContainer 
+                  center={[pandal.coordinates.lat, pandal.coordinates.lng]} 
+                  zoom={15} 
+                  style={{ height: '100%', width: '100%' }}
+                >
+                  <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  />
+                  <Marker position={[pandal.coordinates.lat, pandal.coordinates.lng]}>
+                    <Popup>
+                      {pandal.name}
+                    </Popup>
+                  </Marker>
+                </MapContainer>
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+    </Container>
+  );
+};
+
+export default PandalDetail;

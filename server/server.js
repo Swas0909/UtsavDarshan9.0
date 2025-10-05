@@ -11,7 +11,9 @@ const app = express();
 // Middleware
 app.use(cors({
   origin: 'http://localhost:3001',
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 app.use(session({
@@ -20,8 +22,11 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax'
+  },
+  proxy: true
 }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -53,6 +58,47 @@ const pool = new Pool({
   port: "9000"
 });
 
+// Test database connection and check tables
+pool.query('SELECT NOW()', (err, res) => {
+  if (err) {
+    console.error('Database connection error:', err);
+    process.exit(1);
+  }
+  console.log('Database connected successfully');
+  
+  // Check if tables exist
+  pool.query(`
+    SELECT EXISTS (
+      SELECT FROM information_schema.tables 
+      WHERE table_name = 'favorites'
+    );
+  `, (err, res) => {
+    if (err) {
+      console.error('Error checking favorites table:', err);
+    } else {
+      console.log('Favorites table exists:', res.rows[0].exists);
+      if (!res.rows[0].exists) {
+        console.log('Creating favorites table...');
+        pool.query(`
+          CREATE TABLE favorites (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            pandal_id INTEGER NOT NULL REFERENCES pandals(id) ON DELETE CASCADE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(user_id, pandal_id)
+          );
+        `, (err, res) => {
+          if (err) {
+            console.error('Error creating favorites table:', err);
+          } else {
+            console.log('Favorites table created successfully');
+          }
+        });
+      }
+    }
+  });
+});
+
 // Helper function to calculate distance between coordinates
 function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 6371; // Radius of the Earth in km
@@ -68,18 +114,71 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 
 // Auth Routes
 app.get('/auth/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
+  (req, res, next) => {
+    console.log('Starting Google authentication...');
+    passport.authenticate('google', { 
+      scope: ['profile', 'email'],
+      prompt: 'select_account'
+    })(req, res, next);
+  }
 );
 
 app.get('/auth/google/callback',
-  passport.authenticate('google', { 
-    failureRedirect: 'http://localhost:3001/login',
-    successRedirect: 'http://localhost:3001'
-  })
+  (req, res, next) => {
+    console.log('Received Google callback...');
+    passport.authenticate('google', (err, user, info) => {
+      if (err) {
+        console.error('Google auth error:', err);
+        return res.redirect('http://localhost:3001/login?error=' + encodeURIComponent('Authentication failed'));
+      }
+      if (!user) {
+        console.error('No user returned from Google');
+        return res.redirect('http://localhost:3001/login?error=' + encodeURIComponent('Authentication failed'));
+      }
+      req.logIn(user, (err) => {
+        if (err) {
+          console.error('Login error:', err);
+          return res.redirect('http://localhost:3001/login?error=' + encodeURIComponent('Login failed'));
+        }
+        console.log('User logged in successfully:', user.id);
+        return res.redirect('http://localhost:3001');
+      });
+    })(req, res, next);
+  }
 );
 
 app.get('/api/current-user', (req, res) => {
   res.json(req.user || null);
+});
+
+// Get user's favorite pandals
+app.get('/api/user/favorites', isAuthenticated, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT p.id, p.name, p.location, p.theme, p.crowd_level as "crowdLevel",
+              p.rating, p.lat, p.lng, p.image_url as "imageUrl", p.description,
+              p.visiting_hours as "visitingHours", p.history, p.established,
+              f.created_at as "favoritedAt"
+       FROM pandals p
+       INNER JOIN favorites f ON p.id = f.pandal_id
+       WHERE f.user_id = $1
+       ORDER BY f.created_at DESC`,
+      [req.user.id]
+    );
+
+    const pandals = result.rows.map(p => ({
+      ...p,
+      coordinates: {
+        lat: parseFloat(p.lat),
+        lng: parseFloat(p.lng)
+      }
+    }));
+
+    res.json(pandals);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 app.post('/auth/logout', (req, res) => {
@@ -125,6 +224,37 @@ app.post('/api/admin/pandals', isAdmin, async (req, res) => {
 // Ensure database table exists
 async function ensureTablesExist() {
   try {
+    // First check if the users table exists
+    const usersTableExists = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM pg_tables 
+        WHERE schemaname = 'public' 
+        AND tablename = 'users'
+      );
+    `);
+
+    if (!usersTableExists.rows[0].exists) {
+      console.error('Users table does not exist! Please create users table first.');
+      process.exit(1);
+    }
+
+    // Create favorites table with proper error handling
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS favorites (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          pandal_id INTEGER NOT NULL REFERENCES pandals(id) ON DELETE CASCADE,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(user_id, pandal_id)
+        )
+      `);
+      console.log('Favorites table verified successfully');
+    } catch (err) {
+      console.error('Error creating favorites table:', err);
+      throw err;
+    }
+
     // Create feedback table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS feedbacks (
@@ -302,6 +432,13 @@ app.post('/api/pandals/:id/reject', isAdmin, async (req, res) => {
   }
 });
 
+// Mount route handlers
+const pandalRegistrationRouter = require('./routes/pandalRegistration');
+const favoritesRouter = require('./routes/favorites');
+
+app.use('/api/pandal-registration', pandalRegistrationRouter);
+app.use('/api/user', favoritesRouter);
+
 // API Routes
 app.get('/api/pandals', async (req, res) => {
   try {
@@ -423,6 +560,20 @@ app.get('/api/pandals/:id/reviews', async (req, res) => {
   }
 });
 
+// Get favorite status for a pandal
+app.get('/api/pandals/:id/favorite', isAuthenticated, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM favorites WHERE user_id = $1 AND pandal_id = $2`,
+      [req.user.id, req.params.id]
+    );
+    res.json({ isFavorite: result.rows.length > 0 });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Add a review
 app.post('/api/pandals/:id/reviews', async (req, res) => {
   try {
@@ -437,6 +588,103 @@ app.post('/api/pandals/:id/reviews', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Toggle favorite status for a pandal
+app.post('/api/pandals/:id/favorite', isAuthenticated, async (req, res) => {
+  console.log('Received favorite toggle request:', {
+    userId: req.user?.id,
+    pandalId: req.params.id,
+    action: req.body.action
+  });
+
+  try {
+    const { action } = req.body; // 'add' or 'remove'
+    
+    if (!action) {
+      console.error('No action specified in request body');
+      return res.status(400).json({ error: 'Action must be specified (add or remove)' });
+    }
+
+    if (!req.user?.id) {
+      console.error('No user ID found in request');
+      return res.status(401).json({ error: 'User ID not found' });
+    }
+
+    // Verify pandal exists first
+    const pandalExists = await pool.query(
+      'SELECT id FROM pandals WHERE id = $1',
+      [req.params.id]
+    );
+
+    if (pandalExists.rows.length === 0) {
+      console.error('Pandal not found:', req.params.id);
+      return res.status(404).json({ error: 'Pandal not found' });
+    }
+
+    let result;
+    if (action === 'add') {
+      console.log('Adding favorite');
+      result = await pool.query(
+        `INSERT INTO favorites (user_id, pandal_id)
+         VALUES ($1, $2)
+         ON CONFLICT (user_id, pandal_id) DO NOTHING
+         RETURNING *`,
+        [req.user.id, req.params.id]
+      );
+
+      // If no row was returned due to ON CONFLICT DO NOTHING
+      if (result.rows.length === 0) {
+        // Check if it's already favorited
+        const existing = await pool.query(
+          `SELECT * FROM favorites WHERE user_id = $1 AND pandal_id = $2`,
+          [req.user.id, req.params.id]
+        );
+        if (existing.rows.length > 0) {
+          console.log('Pandal was already favorited');
+          return res.json({ success: true, action: 'add', alreadyExists: true });
+        }
+      }
+
+    } else if (action === 'remove') {
+      console.log('Removing favorite');
+      result = await pool.query(
+        `DELETE FROM favorites 
+         WHERE user_id = $1 AND pandal_id = $2
+         RETURNING *`,
+        [req.user.id, req.params.id]
+      );
+      
+      if (result.rows.length === 0) {
+        console.log('No favorite found to remove');
+        return res.json({ success: true, action: 'remove', nothingToRemove: true });
+      }
+    } else {
+      console.error('Invalid action:', action);
+      return res.status(400).json({ error: 'Invalid action. Must be "add" or "remove"' });
+    }
+
+    console.log('Successfully updated favorite status:', {
+      action,
+      result: result.rows[0]
+    });
+
+    res.json({ 
+      success: true, 
+      action, 
+      userId: req.user.id, 
+      pandalId: req.params.id,
+      favorite: result.rows[0]
+    });
+  } catch (err) {
+    console.error('Error updating favorite:', err);
+    // Send more detailed error information in development
+    res.status(500).json({ 
+      error: 'Internal server error', 
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined,
+      code: err.code // Include the PostgreSQL error code if available
+    });
   }
 });
 

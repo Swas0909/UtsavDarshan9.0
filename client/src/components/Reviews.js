@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Form, Button, Row, Col } from 'react-bootstrap';
+import { Card, Form, Button } from 'react-bootstrap';
 import { StarFill, Star } from 'react-bootstrap-icons';
 
 const Reviews = ({ pandalId }) => {
@@ -9,11 +9,7 @@ const Reviews = ({ pandalId }) => {
     review: ''
   });
 
-  useEffect(() => {
-    fetchReviews();
-  }, [pandalId]);
-
-  const fetchReviews = async () => {
+  const fetchReviews = React.useCallback(async () => {
     try {
       const response = await fetch(`http://localhost:5000/api/pandals/${pandalId}/reviews`);
       const data = await response.json();
@@ -21,7 +17,11 @@ const Reviews = ({ pandalId }) => {
     } catch (error) {
       console.error('Error fetching reviews:', error);
     }
-  };
+  }, [pandalId]);
+
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]);
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();

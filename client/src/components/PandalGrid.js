@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Button, Col, Row, Pagination, Form } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 
@@ -11,6 +11,107 @@ const PandalGrid = ({
   itemsPerPage,
   setItemsPerPage
 }) => {
+  const [favorites, setFavorites] = useState([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check if user is authenticated and fetch their favorites
+  useEffect(() => {
+    const checkAuthAndFetchFavorites = async () => {
+      try {
+        console.log('Checking authentication status...');
+        const response = await fetch('http://localhost:5000/api/current-user', {
+          credentials: 'include'
+        });
+        const userData = await response.json();
+        console.log('User data:', userData);
+
+        if (response.ok && userData) {
+          console.log('User is authenticated');
+          setIsAuthenticated(true);
+          
+          // Fetch user's favorites
+          console.log('Fetching user favorites...');
+          const favResponse = await fetch('http://localhost:5000/api/user/favorites', {
+            credentials: 'include'
+          });
+          
+          if (favResponse.ok) {
+            const favPandals = await favResponse.json();
+            console.log('User favorites:', favPandals);
+            setFavorites(favPandals.map(p => p.id));
+          } else {
+            console.error('Failed to fetch favorites:', await favResponse.text());
+          }
+        } else {
+          console.log('User is not authenticated');
+          setIsAuthenticated(false);
+          setFavorites([]);
+        }
+      } catch (error) {
+        console.error('Error in authentication check:', error);
+        setIsAuthenticated(false);
+        setFavorites([]);
+      }
+    };
+
+    checkAuthAndFetchFavorites();
+  }, []);
+
+  const handleFavoriteClick = async (pandalId) => {
+    console.log('Favorite button clicked for pandal:', pandalId);
+    console.log('Current authentication status:', isAuthenticated);
+
+    if (!isAuthenticated) {
+      console.log('User not authenticated, redirecting to login');
+      window.location.href = '/login';
+      return;
+    }
+
+    try {
+      const isFavorited = favorites.includes(pandalId);
+      console.log('Current favorite status:', isFavorited);
+      const action = isFavorited ? 'remove' : 'add';
+      
+      // Optimistic update
+      if (isFavorited) {
+        setFavorites(favorites.filter(id => id !== pandalId));
+      } else {
+        setFavorites([...favorites, pandalId]);
+      }
+
+      console.log('Sending request to server:', {
+        url: `http://localhost:5000/api/pandals/${pandalId}/favorite`,
+        method: 'POST',
+        action: action
+      });
+
+      const response = await fetch(`http://localhost:5000/api/pandals/${pandalId}/favorite`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action })
+      });
+
+      const data = await response.json();
+      console.log('Server response:', data);
+
+      if (!response.ok) {
+        console.error('Server error:', data);
+        // Revert if the server request failed
+        if (isFavorited) {
+          setFavorites([...favorites, pandalId]);
+        } else {
+          setFavorites(favorites.filter(id => id !== pandalId));
+        }
+        alert('Failed to update favorite status. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error updating favorite:', error);
+      alert('An error occurred while updating favorite status.');
+    }
+  };
   const indexOfLastPandal = currentPage * itemsPerPage;
   const indexOfFirstPandal = indexOfLastPandal - itemsPerPage;
   const currentPandals = pandals.slice(indexOfFirstPandal, indexOfLastPandal);
@@ -123,6 +224,26 @@ const PandalGrid = ({
                       <span className="text-warning me-1">⭐</span>
                       <span>{pandal.rating}/5</span>
                     </div>
+                    <Button 
+                      variant="link" 
+                      className="p-0 favorite-btn"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (!isAuthenticated) {
+                          window.location.href = '/login';
+                          return;
+                        }
+                        handleFavoriteClick(pandal.id);
+                      }}
+                      style={{ fontSize: '1.2rem' }}
+                    >
+                      <i 
+                        className={`bi ${favorites.includes(pandal.id) ? 'bi-heart-fill text-danger' : 'bi-heart'}`}
+                        style={{ pointerEvents: 'none' }}
+                        aria-label={favorites.includes(pandal.id) ? 'Remove from favorites' : 'Add to favorites'}
+                      ></i>
+                    </Button>
                   </div>
                   <Button 
                     as={Link} 
@@ -183,6 +304,18 @@ const styles = `
 
   .text-muted {
     color: #6c757d !important;
+  }
+
+  .favorite-btn {
+    transition: transform 0.2s;
+  }
+
+  .favorite-btn:hover {
+    transform: scale(1.2);
+  }
+
+  .favorite-btn i {
+    font-size: 1.2rem;
   }
 `;
 

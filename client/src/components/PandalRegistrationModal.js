@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Form, Button, Alert } from 'react-bootstrap';
 
-function PandalRegistrationModal({ show, onHide }) {
+function PandalRegistrationModal({ show, onHide, onRegistrationSuccess }) {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -32,53 +32,44 @@ function PandalRegistrationModal({ show, onHide }) {
     }));
   };
 
-  const handleSubmit = async (e) => {
+    const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
-    setError(null);
+    
+    // Check if user is authenticated
+    const isAuthenticated = window.localStorage.getItem('isAuthenticated') === 'true';
+    if (!isAuthenticated) {
+      setError('Please log in to register a pandal');
+      return;
+    }
 
     try {
-      const response = await fetch('http://localhost:5000/api/pandals/register', {
+      const response = await fetch('http://localhost:5000/api/pandal-registration', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to submit pandal registration. Please ensure you are logged in.');
-      }
-
-      setSuccess(true);
-      setTimeout(() => {
+      if (response.ok) {
+        setSuccess(true);
+        if (typeof onRegistrationSuccess === 'function') {
+          onRegistrationSuccess();
+        }
         onHide();
-        setSuccess(false);
-        setFormData({
-          name: '',
-          description: '',
-          address: '',
-          latitude: '',
-          longitude: '',
-          contact_number: '',
-          email: '',
-          website: '',
-          opening_hours: '',
-          closing_hours: '',
-          wheelchair_accessible: false,
-          parking_available: false,
-          food_available: false,
-          restroom_available: false,
-          photo_url: ''
-        });
-      }, 2000);
-
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSubmitting(false);
+      } else {
+        const errorData = await response.json();
+        if (response.status === 401) {
+          window.localStorage.removeItem('isAuthenticated');
+          setError('Please log in to register a pandal');
+        } else {
+          setError(errorData.message || 'Failed to register pandal');
+        }
+      }
+    } catch (error) {
+      console.error('Error submitting pandal registration:', error);
+      setError('An unexpected error occurred. Please try again.');
     }
   };
 

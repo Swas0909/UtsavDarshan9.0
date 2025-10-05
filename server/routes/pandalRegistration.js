@@ -5,7 +5,17 @@ const { isAdmin } = require('../middleware/auth');
 
 // Register a new pandal (pending approval)
 router.post('/register', async (req, res) => {
+  console.log('Received pandal registration request:', req.body);
+  
   try {
+    // Validate required fields
+    const requiredFields = ['name', 'description', 'address', 'latitude', 'longitude', 'opening_hours', 'closing_hours'];
+    for (const field of requiredFields) {
+      if (!req.body[field]) {
+        return res.status(400).json({ error: `${field} is required` });
+      }
+    }
+
     const {
       name,
       description,
@@ -23,6 +33,13 @@ router.post('/register', async (req, res) => {
       restroom_available,
       photo_url
     } = req.body;
+
+    // Validate coordinates
+    if (isNaN(parseFloat(latitude)) || isNaN(parseFloat(longitude))) {
+      return res.status(400).json({ error: 'Invalid coordinates' });
+    }
+
+    console.log('Inserting pandal into database...');
 
     const result = await db.query(
       `INSERT INTO pending_pandals (

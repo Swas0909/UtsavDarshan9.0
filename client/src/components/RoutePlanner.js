@@ -159,16 +159,44 @@ const RoutePlanner = ({ pandals }) => {
                   <p>Estimated Time: {Math.round(route.estimatedTime / 60)} hours {route.estimatedTime % 60} minutes</p>
                   <div className="route-stops">
                     {route.route.map((stop, index) => (
-                      <div key={stop.pandal.id} className="mb-2">
-                        {index + 1}. {stop.pandal.name}
-                        {index < route.route.length - 1 && (
-                          <small className="text-muted ms-2">
-                            ({stop.distance.toFixed(2)} km to next)
-                          </small>
-                        )}
+                      <div key={stop.pandal.id} className="mb-2 d-flex justify-content-between align-items-center">
+                        <div>
+                          {index + 1}. {stop.pandal.name}
+                          {index < route.route.length - 1 && (
+                            <small className="text-muted ms-2">
+                              ({stop.distance.toFixed(2)} km to next)
+                            </small>
+                          )}
+                        </div>
+                        <Button 
+                          variant="outline-primary" 
+                          size="sm"
+                          onClick={() => {
+                            if (!startPoint) return;
+                            const origin = `${startPoint.lat},${startPoint.lng}`;
+                            const destination = `${stop.pandal.coordinates.lat},${stop.pandal.coordinates.lng}`;
+                            window.open(`https://www.google.com/maps/dir/${origin}/${destination}`, '_blank');
+                          }}
+                        >
+                          <i className="bi bi-geo-alt-fill"></i> Navigate
+                        </Button>
                       </div>
                     ))}
                   </div>
+                  <Button 
+                    variant="primary" 
+                    className="w-100 mt-3"
+                    onClick={() => {
+                      if (!startPoint || !route.route.length) return;
+                      const waypoints = route.route.map(stop => 
+                        `${stop.pandal.coordinates.lat},${stop.pandal.coordinates.lng}`
+                      ).join('/');
+                      window.open(`https://www.google.com/maps/dir/${startPoint.lat},${startPoint.lng}/${waypoints}`, '_blank');
+                    }}
+                  >
+                    <i className="bi bi-map-fill me-2"></i>
+                    Start Full Route in Google Maps
+                  </Button>
                 </div>
               )}
             </Card.Body>
