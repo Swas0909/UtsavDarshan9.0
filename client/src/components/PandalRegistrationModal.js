@@ -34,6 +34,7 @@ function PandalRegistrationModal({ show, onHide, onRegistrationSuccess }) {
 
     const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
     
     // Check if user is authenticated
     const isAuthenticated = window.localStorage.getItem('isAuthenticated') === 'true';
@@ -42,8 +43,10 @@ function PandalRegistrationModal({ show, onHide, onRegistrationSuccess }) {
       return;
     }
 
+    setSubmitting(true);
+
     try {
-      const response = await fetch('http://localhost:5000/api/pandal-registration', {
+      const response = await fetch('http://localhost:5000/api/pandal-registration/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -70,6 +73,8 @@ function PandalRegistrationModal({ show, onHide, onRegistrationSuccess }) {
     } catch (error) {
       console.error('Error submitting pandal registration:', error);
       setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 

@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const { isAdmin } = require('../middleware/auth');
+const { isAuthenticated, isAdmin } = require('../middleware/auth');
 
 // Register a new pandal (pending approval)
-router.post('/register', async (req, res) => {
+router.post('/register', isAuthenticated, async (req, res) => {
   console.log('Received pandal registration request:', req.body);
   
   try {
@@ -40,8 +40,12 @@ router.post('/register', async (req, res) => {
     }
 
     console.log('Inserting pandal into database...');
+    
+    // Start a transaction
+    await db.query('BEGIN');
 
-    const result = await db.query(
+    try {
+      const result = await db.query(
       `INSERT INTO pending_pandals (
         name, description, address, latitude, longitude,
         contact_number, email, website, opening_hours,
@@ -59,10 +63,15 @@ router.post('/register', async (req, res) => {
       ]
     );
 
-    res.json(result.rows[0]);
+      await db.query('COMMIT');
+      res.json(result.rows[0]);
+    } catch (dbError) {
+      await db.query('ROLLBACK');
+      throw dbError;
+    }
   } catch (error) {
     console.error('Error registering pandal:', error);
-    res.status(500).json({ error: 'Failed to register pandal' });
+    res.status(500).json({ error: 'Failed to register pandal. ' + error.message });
   }
 });
 
