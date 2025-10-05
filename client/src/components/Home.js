@@ -12,11 +12,46 @@ function Home() {
       try {
         const response = await fetch('http://localhost:5000/api/pandals');
         const data = await response.json();
-        // Get top 3 highest rated pandals
-        const topPandals = data
-          .sort((a, b) => b.rating - a.rating)
-          .slice(0, 3);
-        setFeaturedPandals(topPandals);
+        
+        // First, remove exact duplicates by ID
+        const uniquePandals = Array.from(new Map(data.map(item => [item.id, item])).values());
+        
+        // Sort by rating first
+        const sortedPandals = uniquePandals.sort((a, b) => b.rating - a.rating);
+        
+        // Select featured pandals ensuring diversity but with fallback
+        const selectedPandals = [];
+        let index = 0;
+        
+        // First pass: strict diversity criteria
+        while (selectedPandals.length < 3 && index < sortedPandals.length) {
+          const currentPandal = sortedPandals[index];
+          
+          // Check if this pandal is significantly different from already selected ones
+          const isDuplicate = selectedPandals.some(p => 
+            p.id === currentPandal.id ||
+            p.name.toLowerCase() === currentPandal.name.toLowerCase()
+          );
+          
+          if (!isDuplicate) {
+            selectedPandals.push(currentPandal);
+          }
+          index++;
+        }
+        
+        // If we still don't have 3 pandals, add more with relaxed criteria
+        index = 0;
+        while (selectedPandals.length < 3 && index < sortedPandals.length) {
+          const currentPandal = sortedPandals[index];
+          const isAlreadySelected = selectedPandals.some(p => p.id === currentPandal.id);
+          
+          if (!isAlreadySelected) {
+            selectedPandals.push(currentPandal);
+          }
+          index++;
+        }
+        
+        setFeaturedPandals(selectedPandals);
       } catch (error) {
         console.error('Error fetching featured pandals:', error);
       }

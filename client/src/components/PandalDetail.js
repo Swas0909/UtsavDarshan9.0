@@ -1,12 +1,14 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Card, Badge, Button, Modal } from 'react-bootstrap';
 import Reviews from './Reviews';
 import { useParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import NavigationMap from './NavigationMap';
 
 const PandalDetail = () => {
   const { id } = useParams();
   const [pandal, setPandal] = useState(null);
+  const [showNavigation, setShowNavigation] = useState(false);
 
   const fetchPandalDetails = useCallback(async () => {
     try {
@@ -106,6 +108,37 @@ const PandalDetail = () => {
               </div>
             </Card.Body>
           </Card>
+
+          {/* Navigation Button */}
+          <Button 
+            variant="success" 
+            size="lg" 
+            className="mt-3 w-100"
+            onClick={() => {
+              if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                  (position) => {
+                    // Updated URL with navigation mode and necessary parameters
+                    const url = `https://www.google.com/maps/dir/?api=1&origin=${position.coords.latitude},${position.coords.longitude}&destination=${pandal.coordinates.lat},${pandal.coordinates.lng}&travelmode=driving&dir_action=navigate`;
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                  },
+                  (error) => {
+                    alert('Please enable location services to use navigation. Error: ' + error.message);
+                  },
+                  {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0
+                  }
+                );
+              } else {
+                alert('Geolocation is not supported by your browser');
+              }
+            }}
+          >
+            <i className="bi bi-google me-2"></i> Navigate with Google Maps
+          </Button>
+
         </Col>
       </Row>
     </Container>

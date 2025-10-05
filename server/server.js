@@ -97,6 +97,60 @@ app.post('/auth/logout', (req, res) => {
   });
 });
 
+// Get areas with counts and region grouping
+app.get('/api/areas', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      WITH region_mapping AS (
+        SELECT 
+          area,
+          CASE 
+            WHEN area LIKE '%Mumbai%' THEN 
+              CASE 
+                WHEN area LIKE '%South%' THEN 'South Mumbai'
+                WHEN area LIKE '%Central%' THEN 'Central Mumbai'
+                WHEN area LIKE '%Western%' THEN 'Western Mumbai'
+                WHEN area LIKE '%Eastern%' THEN 'Eastern Mumbai'
+                WHEN area LIKE '%Navi%' THEN 'Navi Mumbai'
+                ELSE 'Mumbai Region'
+              END
+            WHEN area LIKE '%Thane%' THEN 'Thane Region'
+            WHEN area LIKE '%Kalyan%' OR area LIKE '%Dombivli%' THEN 'Kalyan-Dombivli Region'
+            ELSE 'Other Regions'
+          END as region,
+          COUNT(*) as pandal_count
+        FROM pandals 
+        WHERE area IS NOT NULL 
+        GROUP BY area
+      )
+      SELECT 
+        region,
+        json_agg(json_build_object(
+          'name', area,
+          'count', pandal_count
+        )) as areas
+      FROM region_mapping
+      GROUP BY region
+      ORDER BY 
+        CASE 
+          WHEN region = 'South Mumbai' THEN 1
+          WHEN region = 'Central Mumbai' THEN 2
+          WHEN region = 'Western Mumbai' THEN 3
+          WHEN region = 'Eastern Mumbai' THEN 4
+          WHEN region = 'Navi Mumbai' THEN 5
+          WHEN region = 'Thane Region' THEN 6
+          WHEN region = 'Kalyan-Dombivli Region' THEN 7
+          ELSE 8
+        END,
+        region
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching areas:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Admin Routes
 app.get('/api/admin/users', isAdmin, async (req, res) => {
   try {
@@ -111,10 +165,10 @@ app.post('/api/admin/pandals', isAdmin, async (req, res) => {
   try {
     const { name, location, theme, lat, lng, description } = req.body;
     const result = await pool.query(
-      `INSERT INTO pandals (name, location, theme, lat, lng, description)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO pandals (name, location, theme, lat, lng, description, area)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [name, location, theme, lat, lng, description]
+      [name, location, theme, lat, lng, description, area]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -307,7 +361,7 @@ app.get('/api/pandals', async (req, res) => {
   try {
     const { search, location, theme, distance, lat, lng, sortBy } = req.query;
     let query = `
-      SELECT id, name, location, theme, crowd_level as "crowdLevel", 
+      SELECT DISTINCT ON (id) id, name, location, theme, area, crowd_level as "crowdLevel", 
              rating, lat, lng, image_url as "imageUrl", description,
              visiting_hours as "visitingHours", history, established
       FROM pandals
@@ -320,7 +374,8 @@ app.get('/api/pandals', async (req, res) => {
       query += ` AND (
         LOWER(name) LIKE $${paramCount} OR 
         LOWER(location) LIKE $${paramCount} OR 
-        LOWER(theme) LIKE $${paramCount}
+        LOWER(theme) LIKE $${paramCount} OR 
+        LOWER(area) LIKE $${paramCount}
       )`;
       values.push(`%${search.toLowerCase()}%`);
       paramCount++;
@@ -383,7 +438,7 @@ app.get('/api/pandals', async (req, res) => {
 app.get('/api/pandals/:id', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, name, location, theme, crowd_level as "crowdLevel", 
+      `SELECT id, name, location, theme, area, crowd_level as "crowdLevel", 
               rating, lat, lng, image_url as "imageUrl", description,
               visiting_hours as "visitingHours", history, established
        FROM pandals 
