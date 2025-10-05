@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
 import PandalRegistrationModal from './PandalRegistrationModal';
+import HeroExperience from './HeroExperience';
 import { Link } from 'react-router-dom';
 
 function Home() {
@@ -27,31 +28,23 @@ function Home() {
 
   return (
     <Container className="home-container">
-      {/* Hero Section */}
-      <Row className="mb-5">
-        <Col>
-          <h1>Welcome to UtsavDarshan</h1>
-          <p className="lead">
-            Your ultimate guide to exploring Ganpati Pandals across Mumbai during Ganesh Chaturthi.
-            Discover the most beautiful and famous pandals, get real-time crowd updates, and plan your
-            darshan efficiently.
-          </p>
-        </Col>
-      </Row>
+      <HeroExperience />
 
       {/* Featured Pandals */}
       <h2 className="mb-4">Featured Pandals</h2>
       <Row>
-        {featuredPandals.map(pandal => (
-          <Col key={pandal.id} md={4} className="mb-4">
-            <Card className="h-100">
-              <Card.Img 
-                variant="top" 
-                src={pandal.imageUrl || '/images/placeholder.jpg'} 
-                className="pandal-image"
-                alt={pandal.name}
-                style={{ height: '200px', objectFit: 'cover' }}
-              />
+        {featuredPandals.map(pandal => {
+          const imageName = pandal.name.toLowerCase().replace(/ /g, '-').replace(/cha/g, '').replace(/icha/g, '').replace(/licha/g, 'li') + '.jpg';
+          return (
+            <Col key={pandal.id} md={4} className="mb-4">
+              <Card className="h-100">
+                <Card.Img
+                  variant="top"
+                  src={`/images/pandals/${imageName}`}
+                  className="pandal-image"
+                  alt={pandal.name}
+                  style={{ height: '200px', objectFit: 'cover' }}
+                />
               <Card.Body className="d-flex flex-column">
                 <Card.Title className="h5 mb-2">{pandal.name}</Card.Title>
                 <Card.Text className="text-muted mb-2">
@@ -76,7 +69,8 @@ function Home() {
               </Card.Body>
             </Card>
           </Col>
-        ))}
+          );
+        })}
       </Row>
 
       {/* Explore More Button */}

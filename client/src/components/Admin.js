@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Table, Button, Form, Alert, Badge, Nav, Tab } from 'react-bootstrap';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Admin = () => {
   const [users, setUsers] = useState([]);
@@ -65,7 +66,8 @@ const Admin = () => {
       });
       
       if (response.ok) {
-        fetchPendingPandals(); // Refresh the list
+        // Animate removal by filtering out the approved pandal
+        setPendingPandals(prev => prev.filter(p => p.id !== id));
       } else {
         const error = await response.json();
         setError(error.error);
@@ -83,7 +85,8 @@ const Admin = () => {
       });
       
       if (response.ok) {
-        fetchPendingPandals(); // Refresh the list
+        // Animate removal by filtering out the rejected pandal
+        setPendingPandals(prev => prev.filter(p => p.id !== id));
       } else {
         const error = await response.json();
         setError(error.error);
@@ -193,58 +196,66 @@ const Admin = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {pendingPandals.map((pandal) => (
-                    <tr key={pandal.id}>
-                      <td>
-                        <strong>{pandal.name}</strong>
-                        <br />
-                        <small className="text-muted">{pandal.description}</small>
-                      </td>
-                      <td>
-                        {pandal.address}
-                        <br />
-                        <small className="text-muted">
-                          {pandal.latitude}, {pandal.longitude}
-                        </small>
-                      </td>
-                      <td>
-                        {pandal.contact_number}
-                        <br />
-                        {pandal.email}
-                      </td>
-                      <td>
-                        {pandal.wheelchair_accessible && (
-                          <Badge bg="info" className="me-1">Wheelchair</Badge>
-                        )}
-                        {pandal.parking_available && (
-                          <Badge bg="info" className="me-1">Parking</Badge>
-                        )}
-                        {pandal.food_available && (
-                          <Badge bg="info" className="me-1">Food</Badge>
-                        )}
-                        {pandal.restroom_available && (
-                          <Badge bg="info">Restroom</Badge>
-                        )}
-                      </td>
-                      <td>
-                        <Button
-                          variant="success"
-                          size="sm"
-                          className="me-2"
-                          onClick={() => handleApprove(pandal.id)}
-                        >
-                          Approve
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleReject(pandal.id)}
-                        >
-                          Reject
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
+                  <AnimatePresence>
+                    {pendingPandals.map((pandal) => (
+                      <motion.tr
+                        key={pandal.id}
+                        initial={{ opacity: 0, x: -50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 50, transition: { duration: 0.3 } }}
+                        layout
+                      >
+                        <td>
+                          <strong>{pandal.name}</strong>
+                          <br />
+                          <small className="text-muted">{pandal.description}</small>
+                        </td>
+                        <td>
+                          {pandal.address}
+                          <br />
+                          <small className="text-muted">
+                            {pandal.latitude}, {pandal.longitude}
+                          </small>
+                        </td>
+                        <td>
+                          {pandal.contact_number}
+                          <br />
+                          {pandal.email}
+                        </td>
+                        <td>
+                          {pandal.wheelchair_accessible && (
+                            <Badge bg="info" className="me-1">Wheelchair</Badge>
+                          )}
+                          {pandal.parking_available && (
+                            <Badge bg="info" className="me-1">Parking</Badge>
+                          )}
+                          {pandal.food_available && (
+                            <Badge bg="info" className="me-1">Food</Badge>
+                          )}
+                          {pandal.restroom_available && (
+                            <Badge bg="info">Restroom</Badge>
+                          )}
+                        </td>
+                        <td>
+                          <Button
+                            variant="success"
+                            size="sm"
+                            className="me-2"
+                            onClick={() => handleApprove(pandal.id)}
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() => handleReject(pandal.id)}
+                          >
+                            Reject
+                          </Button>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </AnimatePresence>
                 </tbody>
               </Table>
             )}

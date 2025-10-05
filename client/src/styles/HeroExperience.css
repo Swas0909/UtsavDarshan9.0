@@ -1,0 +1,35 @@
+.hero-experience{
+  position:relative;
+  background: linear-gradient(180deg,#F6F1E7 0%, #FFF9F0 70%);
+  padding:72px 20px 120px;
+  overflow:hidden;
+  text-align:center;
+}
+.hero-experience .hero-overlay{
+  position:absolute; inset:0;
+  background: radial-gradient(800px 400px at 50% 10%, rgba(250,238,210,0.25), transparent 20%);
+  pointer-events:none;
+}
+.hero-inner{ position:relative; z-index:2; max-width:1200px; margin:0 auto; }
+.hero-toplabel{ font-family: 'Poppins', sans-serif; color:#7A1F1F; letter-spacing:1px; font-weight:600; margin-bottom:14px;}
+.hero-title{ font-family: 'Playfair Display', serif; color:#7A1F1F; font-size:64px; margin:0 0 12px; line-height:1; }
+.hero-sub{ font-family:'Poppins', sans-serif; color:#2B2B2B; font-size:18px; max-width:880px; margin:0 auto 22px; }
+.hero-cta-row{ margin:20px 0; display:flex; gap:12px; justify-content:center; align-items:center; flex-direction:column; }
+.btn-nearme{ background: linear-gradient(90deg,#D99C3A,#F2B35C); color:#fff; border:none; padding:12px 28px; border-radius:28px; cursor:pointer; box-shadow:0 18px 40px rgba(217,156,58,0.14); font-weight:600; }
+.near-msg{ color:#7A1F1F; font-size:14px; margin-top:8px; min-height:18px; }
+.hero-social{ margin-top:18px; display:flex; gap:14px; justify-content:center; }
+.social-icon svg{ opacity:.95; transition: transform .18s ease, opacity .18s ease; }
+.social-icon:hover svg{ transform:translateY(-4px); opacity:1; }
+
+.hero-spline-wrap{ position:absolute; right:6%; top:6%; width:420px; height:420px; opacity:.95; pointer-events:none; transform:translateZ(0); filter:drop-shadow(0 30px 60px rgba(120,60,20,0.08)); }
+.spline-fallback{ width:100%; height:100%; background:linear-gradient(180deg,#FFF8ED,#FFF2E0); border-radius:20px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.2); }
+
+@media(max-width:900px){
+  .hero-title{ font-size:44px }
+  .hero-spline-wrap{ width:300px; height:300px; right:4%; top:12%; }
+}
+@media(max-width:560px){
+  .hero-title{ font-size:32px }
+  .hero-spline-wrap{ display:none }
+  .hero-cta-row{ flex-direction:column; }
+}

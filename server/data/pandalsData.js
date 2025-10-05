@@ -1,2 +1,2 @@
-const pandalsData = require('./data/pandals.json');
+const pandalsData = require('./pandals.json');
 module.exports = pandalsData;

@@ -2,15 +2,18 @@ import React from 'react';
 import { Card, Button, Col, Row, Pagination, Form } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 
-const PandalGrid = ({ 
-  pandals, 
-  userLocation, 
-  calculateDistance, 
-  currentPage, 
-  setCurrentPage, 
+const PandalGrid = ({
+  pandals,
+  userLocation,
+  calculateDistance,
+  currentPage,
+  setCurrentPage,
   itemsPerPage,
   setItemsPerPage
 }) => {
+  if (!Array.isArray(pandals)) {
+    pandals = [];
+  }
   const indexOfLastPandal = currentPage * itemsPerPage;
   const indexOfFirstPandal = indexOfLastPandal - itemsPerPage;
   const currentPandals = pandals.slice(indexOfFirstPandal, indexOfLastPandal);

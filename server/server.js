@@ -1,12 +1,16 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { Pool } = require('pg');
 const session = require('express-session');
 const passport = require('passport');
+const path = require('path');
 require('./config/passport');
+const pandalsData = require('./data/pandalsData');
 
 const app = express();
+
+// Serve static images
+app.use('/images', express.static(path.join(__dirname, '../client/public/images')));
 
 // Middleware
 app.use(cors({
@@ -44,14 +48,7 @@ const isAdmin = (req, res, next) => {
   return next();
 };
 
-// Database connection
-const pool = new Pool({
-  database: "utsavdarshan",
-  user: "postgres",
-  password: "swas1234",
-  host: "localhost",
-  port: "9000"
-});
+// No database connection needed
 
 // Helper function to calculate distance between coordinates
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -97,255 +94,44 @@ app.post('/auth/logout', (req, res) => {
   });
 });
 
-// Admin Routes
-app.get('/api/admin/users', isAdmin, async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM users ORDER BY created_at DESC');
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
-app.post('/api/admin/pandals', isAdmin, async (req, res) => {
-  try {
-    const { name, location, theme, lat, lng, description } = req.body;
-    const result = await pool.query(
-      `INSERT INTO pandals (name, location, theme, lat, lng, description)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-      [name, location, theme, lat, lng, description]
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Ensure database table exists
-async function ensureTablesExist() {
-  try {
-    // Create feedback table
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS feedbacks (
-        id SERIAL PRIMARY KEY,
-        email VARCHAR(255) NOT NULL,
-        message TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS pending_pandals (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        description TEXT,
-        address TEXT,
-        latitude DECIMAL(10, 8),
-        longitude DECIMAL(11, 8),
-        contact_number VARCHAR(20),
-        email VARCHAR(255),
-        website VARCHAR(255),
-        opening_hours TIME,
-        closing_hours TIME,
-        wheelchair_accessible BOOLEAN DEFAULT false,
-        parking_available BOOLEAN DEFAULT false,
-        food_available BOOLEAN DEFAULT false,
-        restroom_available BOOLEAN DEFAULT false,
-        photo_url TEXT,
-        status VARCHAR(20) DEFAULT 'pending',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    console.log('Database tables verified');
-  } catch (error) {
-    console.error('Error creating tables:', error);
-  }
-}
-
-ensureTablesExist();
-
-// Pandal Registration Routes
-app.post('/api/pandals/register', isAuthenticated, async (req, res) => {
-  try {
-    const {
-      name,
-      description,
-      address,
-      latitude,
-      longitude,
-      contact_number,
-      email,
-      website,
-      opening_hours,
-      closing_hours,
-      wheelchair_accessible,
-      parking_available,
-      food_available,
-      restroom_available,
-      photo_url
-    } = req.body;
-
-    // Insert into pending_pandals table
-    const result = await pool.query(
-      `INSERT INTO pending_pandals (
-        name, description, address, latitude, longitude,
-        contact_number, email, website, opening_hours,
-        closing_hours, wheelchair_accessible, parking_available,
-        food_available, restroom_available, photo_url,
-        status, created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW())
-      RETURNING *`,
-      [
-        name, description, address, latitude, longitude,
-        contact_number, email, website, opening_hours,
-        closing_hours, wheelchair_accessible, parking_available,
-        food_available, restroom_available, photo_url,
-        'pending'
-      ]
-    );
-
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error('Error registering pandal:', error);
-    res.status(500).json({ error: 'Failed to register pandal' });
-  }
-});
-
-// Get pending pandals (admin only)
-app.get('/api/pandals/pending', isAdmin, async (req, res) => {
-  try {
-    console.log('Fetching pending pandals...');
-    console.log('User:', req.user);
-    const result = await pool.query(
-      'SELECT * FROM pending_pandals WHERE status = $1',
-      ['pending']
-    );
-    console.log('Found pending pandals:', result.rows.length);
-    res.json(result.rows);
-  } catch (error) {
-    console.error('Error fetching pending pandals:', error);
-    res.status(500).json({ error: 'Failed to fetch pending pandals: ' + error.message });
-  }
-});
-
-// Approve a pandal (admin only)
-app.post('/api/pandals/:id/approve', isAdmin, async (req, res) => {
-  try {
-    // Start a transaction
-    await pool.query('BEGIN');
-
-    // Get the pending pandal
-    const pendingPandal = await pool.query(
-      'SELECT * FROM pending_pandals WHERE id = $1',
-      [req.params.id]
-    );
-
-    if (pendingPandal.rows.length === 0) {
-      throw new Error('Pending pandal not found');
-    }
-
-    const pandal = pendingPandal.rows[0];
-
-    // Insert into main pandals table
-    await pool.query(
-      `INSERT INTO pandals (
-        name, description, location, lat, lng,
-        contact_number, email, website, visiting_hours,
-        wheelchair_accessible, parking_available,
-        food_available, restroom_available, image_url
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
-      [
-        pandal.name, pandal.description, pandal.address,
-        pandal.latitude, pandal.longitude, pandal.contact_number,
-        pandal.email, pandal.website, 
-        `${pandal.opening_hours} - ${pandal.closing_hours}`,
-        pandal.wheelchair_accessible, pandal.parking_available,
-        pandal.food_available, pandal.restroom_available,
-        pandal.photo_url
-      ]
-    );
-
-    // Update status in pending_pandals
-    await pool.query(
-      'UPDATE pending_pandals SET status = $1 WHERE id = $2',
-      ['approved', req.params.id]
-    );
-
-    // Commit transaction
-    await pool.query('COMMIT');
-
-    res.json({ message: 'Pandal approved successfully' });
-  } catch (error) {
-    await pool.query('ROLLBACK');
-    console.error('Error approving pandal:', error);
-    res.status(500).json({ error: 'Failed to approve pandal' });
-  }
-});
-
-// Reject a pandal (admin only)
-app.post('/api/pandals/:id/reject', isAdmin, async (req, res) => {
-  try {
-    const result = await pool.query(
-      'UPDATE pending_pandals SET status = $1 WHERE id = $2 RETURNING *',
-      ['rejected', req.params.id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Pending pandal not found' });
-    }
-
-    res.json({ message: 'Pandal registration rejected' });
-  } catch (error) {
-    console.error('Error rejecting pandal:', error);
-    res.status(500).json({ error: 'Failed to reject pandal' });
-  }
-});
 
 // API Routes
 app.get('/api/pandals', async (req, res) => {
   try {
     const { search, location, theme, distance, lat, lng, sortBy } = req.query;
-    let query = `
-      SELECT id, name, location, theme, crowd_level as "crowdLevel", 
-             rating, lat, lng, image_url as "imageUrl", description,
-             visiting_hours as "visitingHours", history, established
-      FROM pandals
-      WHERE 1=1
-    `;
-    const values = [];
-    let paramCount = 1;
+    let pandals = pandalsData.pandals.map(p => ({
+      id: p.id,
+      name: p.name,
+      location: p.location,
+      theme: p.theme,
+      crowdLevel: p.crowdLevel,
+      rating: p.rating,
+      lat: p.coordinates.lat,
+      lng: p.coordinates.lng,
+      imageUrl: p.imageUrl,
+      description: p.description,
+      visitingHours: p.visitingHours,
+      history: p.history,
+      established: p.established,
+      coordinates: p.coordinates
+    }));
 
     if (search) {
-      query += ` AND (
-        LOWER(name) LIKE $${paramCount} OR 
-        LOWER(location) LIKE $${paramCount} OR 
-        LOWER(theme) LIKE $${paramCount}
-      )`;
-      values.push(`%${search.toLowerCase()}%`);
-      paramCount++;
+      pandals = pandals.filter(p =>
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.location.toLowerCase().includes(search.toLowerCase()) ||
+        p.theme.toLowerCase().includes(search.toLowerCase())
+      );
     }
 
     if (location) {
-      query += ` AND LOWER(location) LIKE $${paramCount}`;
-      values.push(`%${location.toLowerCase()}%`);
-      paramCount++;
+      pandals = pandals.filter(p => p.location.toLowerCase().includes(location.toLowerCase()));
     }
 
     if (theme) {
-      query += ` AND LOWER(theme) = $${paramCount}`;
-      values.push(theme.toLowerCase());
-      paramCount++;
+      pandals = pandals.filter(p => p.theme.toLowerCase() === theme.toLowerCase());
     }
-
-    const result = await pool.query(query, values);
-    let pandals = result.rows.map(p => ({
-      ...p,
-      coordinates: {
-        lat: parseFloat(p.lat),
-        lng: parseFloat(p.lng)
-      }
-    }));
 
     // Handle distance filtering and sorting in memory since it requires complex calculations
     if (distance && lat && lng) {
@@ -382,27 +168,27 @@ app.get('/api/pandals', async (req, res) => {
 // Get pandal by ID
 app.get('/api/pandals/:id', async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT id, name, location, theme, crowd_level as "crowdLevel", 
-              rating, lat, lng, image_url as "imageUrl", description,
-              visiting_hours as "visitingHours", history, established
-       FROM pandals 
-       WHERE id = $1`,
-      [req.params.id]
-    );
-
-    if (result.rows.length === 0) {
+    const pandal = pandalsData.pandals.find(p => p.id == req.params.id);
+    if (!pandal) {
       return res.status(404).json({ error: 'Pandal not found' });
     }
 
-    const pandal = {
-      ...result.rows[0],
-      coordinates: {
-        lat: parseFloat(result.rows[0].lat),
-        lng: parseFloat(result.rows[0].lng)
-      }
-    };
-    res.json(pandal);
+    res.json({
+      id: pandal.id,
+      name: pandal.name,
+      location: pandal.location,
+      theme: pandal.theme,
+      crowdLevel: pandal.crowdLevel,
+      rating: pandal.rating,
+      lat: pandal.coordinates.lat,
+      lng: pandal.coordinates.lng,
+      imageUrl: pandal.imageUrl,
+      description: pandal.description,
+      visitingHours: pandal.visitingHours,
+      history: pandal.history,
+      established: pandal.established,
+      coordinates: pandal.coordinates
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal server error' });
@@ -412,11 +198,7 @@ app.get('/api/pandals/:id', async (req, res) => {
 // Get reviews for a pandal
 app.get('/api/pandals/:id/reviews', async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT * FROM reviews WHERE pandal_id = $1 ORDER BY created_at DESC`,
-      [req.params.id]
-    );
-    res.json(result.rows);
+    res.json([]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal server error' });
@@ -475,19 +257,13 @@ app.get('/api/admin/feedbacks', isAdmin, async (req, res) => {
 app.post('/api/route-plan', async (req, res) => {
   try {
     const { pandals, startPoint } = req.body;
-    const result = await pool.query(
-      `SELECT id, name, location, lat, lng 
-       FROM pandals 
-       WHERE id = ANY($1)`,
-      [pandals]
-    );
-    
-    const selectedPandals = result.rows.map(p => ({
-      ...p,
-      coordinates: {
-        lat: parseFloat(p.lat),
-        lng: parseFloat(p.lng)
-      }
+    const selectedPandals = pandalsData.pandals.filter(p => pandals.includes(p.id)).map(p => ({
+      id: p.id,
+      name: p.name,
+      location: p.location,
+      lat: p.coordinates.lat,
+      lng: p.coordinates.lng,
+      coordinates: p.coordinates
     }));
 
     // Simple route optimization using nearest neighbor algorithm
@@ -498,7 +274,7 @@ app.post('/api/route-plan', async (req, res) => {
     while (unvisited.length > 0) {
       let nearestIdx = 0;
       let minDistance = Infinity;
-      
+
       unvisited.forEach((pandal, idx) => {
         const distance = calculateDistance(
           current.lat,
