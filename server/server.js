@@ -5,6 +5,7 @@ const { Pool } = require('pg');
 const session = require('express-session');
 const passport = require('passport');
 require('./config/passport');
+const pandalsData = require('./data/pandalsData');
 
 const app = express();
 
@@ -374,8 +375,24 @@ app.get('/api/pandals', async (req, res) => {
 
     res.json(pandals);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('DB error, using static data:', err.message);
+    const staticPandals = pandalsData.pandals.map(p => ({
+      id: p.id,
+      name: p.name,
+      location: p.location,
+      theme: p.theme,
+      crowdLevel: p.crowdLevel,
+      rating: p.rating,
+      lat: p.coordinates.lat,
+      lng: p.coordinates.lng,
+      imageUrl: p.imageUrl,
+      description: p.description,
+      visitingHours: p.visitingHours,
+      history: p.history,
+      established: p.established,
+      coordinates: p.coordinates
+    }));
+    res.json(staticPandals);
   }
 });
 
