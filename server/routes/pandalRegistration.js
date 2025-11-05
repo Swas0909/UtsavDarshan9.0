@@ -6,13 +6,15 @@ const { isAuthenticated, isAdmin } = require('../middleware/auth');
 // Register a new pandal (pending approval)
 router.post('/register', isAuthenticated, async (req, res) => {
   console.log('Received pandal registration request:', req.body);
+  console.log('User:', req.user);
   
   try {
     // Validate required fields
     const requiredFields = ['name', 'description', 'address', 'latitude', 'longitude', 'opening_hours', 'closing_hours'];
     for (const field of requiredFields) {
       if (!req.body[field]) {
-        return res.status(400).json({ error: `${field} is required` });
+        console.log(`Missing required field: ${field}`);
+        return res.status(400).json({ message: `${field} is required` });
       }
     }
 
@@ -35,8 +37,22 @@ router.post('/register', isAuthenticated, async (req, res) => {
     } = req.body;
 
     // Validate coordinates
-    if (isNaN(parseFloat(latitude)) || isNaN(parseFloat(longitude))) {
-      return res.status(400).json({ error: 'Invalid coordinates' });
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+    
+    if (isNaN(lat) || isNaN(lng)) {
+      console.log('Invalid coordinates - not numbers:', { latitude, longitude });
+      return res.status(400).json({ message: 'Latitude and longitude must be valid numbers' });
+    }
+
+    if (lat < -90 || lat > 90) {
+      console.log('Invalid latitude - out of range:', lat);
+      return res.status(400).json({ message: 'Latitude must be between -90 and 90' });
+    }
+
+    if (lng < -180 || lng > 180) {
+      console.log('Invalid longitude - out of range:', lng);
+      return res.status(400).json({ message: 'Longitude must be between -180 and 180' });
     }
 
     console.log('Inserting pandal into database...');
@@ -55,23 +71,25 @@ router.post('/register', isAuthenticated, async (req, res) => {
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW())
       RETURNING *`,
       [
-        name, description, address, latitude, longitude,
-        contact_number, email, website, opening_hours,
-        closing_hours, wheelchair_accessible, parking_available,
-        food_available, restroom_available, photo_url,
+        name, description, address, lat, lng,
+        contact_number || null, email || null, website || null, opening_hours,
+        closing_hours, wheelchair_accessible || false, parking_available || false,
+        food_available || false, restroom_available || false, photo_url || null,
         'pending'
       ]
     );
 
       await db.query('COMMIT');
+      console.log('Successfully registered pandal:', result.rows[0]);
       res.json(result.rows[0]);
     } catch (dbError) {
       await db.query('ROLLBACK');
+      console.error('Database error:', dbError);
       throw dbError;
     }
   } catch (error) {
     console.error('Error registering pandal:', error);
-    res.status(500).json({ error: 'Failed to register pandal. ' + error.message });
+    res.status(500).json({ message: 'Failed to register pandal: ' + error.message });
   }
 });
 

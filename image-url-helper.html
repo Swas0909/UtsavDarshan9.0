@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image URL Helper - Utsav Darshan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .steps {
+            list-style: none;
+            counter-reset: step-counter;
+        }
+        
+        .steps li {
+            counter-increment: step-counter;
+            margin-bottom: 15px;
+            padding-left: 40px;
+            position: relative;
+            line-height: 1.6;
+        }
+        
+        .steps li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .example-box {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border: 1px solid #dee2e6;
+        }
+        
+        code {
+            background: #f1f3f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #d63384;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .url-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        .url-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #5568d3;
+        }
+        
+        .preview-area {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .preview-area img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .sql-output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        
+        .service-link {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        
+        .service-link:hover {
+            background: #5568d3;
+        }
+        
+        .tip {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        
+        .tip strong {
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖼️ Image URL Helper</h1>
+        <p class="subtitle">Quick tool to get image URLs for your pandal website</p>
+        
+        <!-- Method 1 -->
+        <div class="section">
+            <h2>📤 Method 1: Upload to Image Hosting Service</h2>
+            <p><strong>Recommended Services:</strong></p>
+            <div style="margin-top: 15px;">
+                <a href="https://imgur.com/upload" target="_blank" class="service-link">📸 Imgur (Easiest)</a>
+                <a href="https://imgbb.com/" target="_blank" class="service-link">📸 ImgBB</a>
+                <a href="https://cloudinary.com/" target="_blank" class="service-link">☁️ Cloudinary</a>
+            </div>
+            
+            <ol class="steps" style="margin-top: 20px;">
+                <li>Click on one of the services above (Imgur recommended)</li>
+                <li>Upload your pandal image</li>
+                <li>Right-click the uploaded image → "Copy image address"</li>
+                <li>Paste the URL in the field below</li>
+            </ol>
+        </div>
+        
+        <!-- URL Tester -->
+        <div class="section">
+            <h2>🔍 Test Your Image URL</h2>
+            <p>Paste your image URL here to test if it works:</p>
+            
+            <input 
+                type="text" 
+                class="url-input" 
+                id="imageUrl" 
+                placeholder="https://i.imgur.com/abc123.jpg or /images/pandals/my-image.jpg"
+            >
+            
+            <button class="btn" onclick="testImage()">Test Image</button>
+            <button class="btn" onclick="generateSQL()" style="background: #28a745;">Generate SQL</button>
+            
+            <div id="preview" class="preview-area" style="display: none;">
+                <h3>Preview:</h3>
+                <img id="previewImg" src="" alt="Image preview">
+            </div>
+            
+            <div id="sqlOutput" style="display: none;"></div>
+        </div>
+        
+        <!-- Method 2 -->
+        <div class="section">
+            <h2>📁 Method 2: Use Local Images</h2>
+            <ol class="steps">
+                <li>Save your image file (e.g., <code>lalbaugcha-raja.jpg</code>)</li>
+                <li>Copy it to: <code>client/public/images/pandals/</code></li>
+                <li>Use path: <code>/images/pandals/lalbaugcha-raja.jpg</code></li>
+            </ol>
+            
+            <div class="example-box">
+                <strong>Example:</strong><br>
+                File location: <code>client/public/images/pandals/andheri-raja.jpg</code><br>
+                Database value: <code>/images/pandals/andheri-raja.jpg</code>
+            </div>
+        </div>
+        
+        <!-- SQL Generator -->
+        <div class="section">
+            <h2>💾 Update Database with SQL</h2>
+            <p>After getting your image URL, update your database:</p>
+            
+            <div class="example-box">
+                <strong>Option 1: By Pandal ID</strong>
+                <div class="sql-output">UPDATE pandals SET image_url = 'YOUR_IMAGE_URL' WHERE id = 1;</div>
+            </div>
+            
+            <div class="example-box" style="margin-top: 15px;">
+                <strong>Option 2: By Pandal Name</strong>
+                <div class="sql-output">UPDATE pandals SET image_url = 'YOUR_IMAGE_URL' WHERE name LIKE '%Lalbaugcha%Raja%';</div>
+            </div>
+            
+            <div class="tip">
+                <strong>💡 Tip:</strong> Use pgAdmin or psql command line to run these SQL commands on your PostgreSQL database.
+            </div>
+        </div>
+        
+        <!-- Existing Images -->
+        <div class="section">
+            <h2>✅ Your Existing Images</h2>
+            <p>Images already available in <code>client/public/images/pandals/</code>:</p>
+            
+            <ul style="list-style: none; padding: 0; margin-top: 15px;">
+                <li>✓ <code>/images/pandals/andhericha-raja.jpg</code></li>
+                <li>✓ <code>/images/pandals/chinchpokli-chintamani.jpg</code></li>
+                <li>✓ <code>/images/pandals/gsb-seva-mandal.jpg</code></li>
+                <li>✓ <code>/images/pandals/khetwadi-ganraj.jpg</code></li>
+                <li>✓ <code>/images/pandals/lalbaugcha-raja.jpg</code></li>
+                <li>✓ <code>/images/pandals/mumbaicha-raja.jpg</code></li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        function testImage() {
+            const url = document.getElementById('imageUrl').value.trim();
+            const preview = document.getElementById('preview');
+            const previewImg = document.getElementById('previewImg');
+            
+            if (!url) {
+                alert('Please enter an image URL');
+                return;
+            }
+            
+            // Test if it's a valid URL or path
+            previewImg.src = url;
+            preview.style.display = 'block';
+            
+            previewImg.onload = function() {
+                const successMsg = document.createElement('div');
+                successMsg.className = 'alert alert-success';
+                successMsg.textContent = '✓ Image loaded successfully! You can use this URL.';
+                
+                // Remove existing alerts
+                const existingAlerts = preview.querySelectorAll('.alert');
+                existingAlerts.forEach(alert => alert.remove());
+                
+                preview.appendChild(successMsg);
+            };
+            
+            previewImg.onerror = function() {
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'alert alert-error';
+                errorMsg.textContent = '✗ Failed to load image. Please check the URL and try again.';
+                
+                // Remove existing alerts
+                const existingAlerts = preview.querySelectorAll('.alert');
+                existingAlerts.forEach(alert => alert.remove());
+                
+                preview.appendChild(errorMsg);
+            };
+        }
+        
+        function generateSQL() {
+            const url = document.getElementById('imageUrl').value.trim();
+            const sqlOutput = document.getElementById('sqlOutput');
+            
+            if (!url) {
+                alert('Please enter an image URL first');
+                return;
+            }
+            
+            const sql1 = `UPDATE pandals SET image_url = '${url}' WHERE id = 1;`;
+            const sql2 = `UPDATE pandals SET image_url = '${url}' WHERE name LIKE '%Pandal Name%';`;
+            
+            sqlOutput.innerHTML = `
+                <h3 style="margin-top: 20px;">Generated SQL Commands:</h3>
+                <div class="example-box">
+                    <strong>Update by ID (change 1 to your pandal ID):</strong>
+                    <div class="sql-output">${sql1}</div>
+                </div>
+                <div class="example-box" style="margin-top: 15px;">
+                    <strong>Update by name (change 'Pandal Name' to match your pandal):</strong>
+                    <div class="sql-output">${sql2}</div>
+                </div>
+                <div class="alert alert-success">
+                    Copy one of these commands and run it in your PostgreSQL database!
+                </div>
+            `;
+            
+            sqlOutput.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

@@ -221,6 +221,32 @@ app.post('/api/admin/pandals', isAdmin, async (req, res) => {
   }
 });
 
+// Update pandal image (admin only)
+app.put('/api/admin/pandals/:id/image', isAdmin, async (req, res) => {
+  try {
+    const { image_url } = req.body;
+    const { id } = req.params;
+
+    if (!image_url) {
+      return res.status(400).json({ message: 'Image URL is required' });
+    }
+
+    const result = await pool.query(
+      `UPDATE pandals SET image_url = $1 WHERE id = $2 RETURNING *`,
+      [image_url, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Pandal not found' });
+    }
+
+    res.json({ message: 'Image updated successfully', pandal: result.rows[0] });
+  } catch (err) {
+    console.error('Error updating image:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 // Ensure database table exists
 async function ensureTablesExist() {
   try {

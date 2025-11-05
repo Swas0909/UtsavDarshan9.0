@@ -212,6 +212,11 @@ const PandalGrid = ({
                 className="pandal-image"
                 alt={pandal.name}
                 style={{ height: '200px', objectFit: 'cover' }}
+                onError={(e) => {
+                  if (e.currentTarget.src.endsWith('/images/placeholder.jpg')) return;
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/images/placeholder.jpg';
+                }}
               />
               <Card.Body className="d-flex flex-column">
                 <Card.Title className="h5 mb-2">{pandal.name}</Card.Title>

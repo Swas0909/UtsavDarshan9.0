@@ -116,9 +116,14 @@ const PandalDetail = () => {
           <Card>
             <Card.Img 
               variant="top" 
-              src={pandal.imageUrl} 
+              src={pandal.imageUrl || '/images/placeholder.jpg'} 
               alt={pandal.name}
               style={{ height: '400px', objectFit: 'cover' }}
+              onError={(e) => {
+                if (e.currentTarget.src.endsWith('/images/placeholder.jpg')) return;
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/images/placeholder.jpg';
+              }}
             />
             <Card.Body>
               <Card.Title className="h2">{pandal.name || 'Pandal Details'}</Card.Title>

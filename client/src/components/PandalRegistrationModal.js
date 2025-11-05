@@ -35,11 +35,31 @@ function PandalRegistrationModal({ show, onHide, onRegistrationSuccess }) {
     const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setSuccess(false);
     
     // Check if user is authenticated
     const isAuthenticated = window.localStorage.getItem('isAuthenticated') === 'true';
     if (!isAuthenticated) {
       setError('Please log in to register a pandal');
+      return;
+    }
+
+    // Validate coordinates
+    const lat = parseFloat(formData.latitude);
+    const lng = parseFloat(formData.longitude);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      setError('Please enter valid numbers for latitude and longitude');
+      return;
+    }
+
+    if (lat < -90 || lat > 90) {
+      setError('Latitude must be between -90 and 90');
+      return;
+    }
+
+    if (lng < -180 || lng > 180) {
+      setError('Longitude must be between -180 and 180');
       return;
     }
 
@@ -57,17 +77,38 @@ function PandalRegistrationModal({ show, onHide, onRegistrationSuccess }) {
 
       if (response.ok) {
         setSuccess(true);
-        if (typeof onRegistrationSuccess === 'function') {
-          onRegistrationSuccess();
-        }
-        onHide();
+        // Reset form
+        setFormData({
+          name: '',
+          description: '',
+          address: '',
+          latitude: '',
+          longitude: '',
+          contact_number: '',
+          email: '',
+          website: '',
+          opening_hours: '',
+          closing_hours: '',
+          wheelchair_accessible: false,
+          parking_available: false,
+          food_available: false,
+          restroom_available: false,
+          photo_url: ''
+        });
+        
+        setTimeout(() => {
+          if (typeof onRegistrationSuccess === 'function') {
+            onRegistrationSuccess();
+          }
+          onHide();
+        }, 2000);
       } else {
         const errorData = await response.json();
         if (response.status === 401) {
           window.localStorage.removeItem('isAuthenticated');
           setError('Please log in to register a pandal');
         } else {
-          setError(errorData.message || 'Failed to register pandal');
+          setError(errorData.message || errorData.error || 'Failed to register pandal');
         }
       }
     } catch (error) {
@@ -132,8 +173,12 @@ function PandalRegistrationModal({ show, onHide, onRegistrationSuccess }) {
                   name="latitude"
                   value={formData.latitude}
                   onChange={handleChange}
+                  placeholder="e.g., 22.5726"
                   required
                 />
+                <Form.Text className="text-muted">
+                  Must be between -90 and 90
+                </Form.Text>
               </Form.Group>
             </div>
             <div className="col">
@@ -145,8 +190,12 @@ function PandalRegistrationModal({ show, onHide, onRegistrationSuccess }) {
                   name="longitude"
                   value={formData.longitude}
                   onChange={handleChange}
+                  placeholder="e.g., 88.3639"
                   required
                 />
+                <Form.Text className="text-muted">
+                  Must be between -180 and 180
+                </Form.Text>
               </Form.Group>
             </div>
           </div>
