@@ -1,11 +1,53 @@
-import React, { useState } from 'react';
-import { Container, Row, Col, Button, Card, ListGroup } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Container, Row, Col, Button, Card, ListGroup, Form } from 'react-bootstrap';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 
 const RoutePlanner = ({ pandals }) => {
   const [selectedPandals, setSelectedPandals] = useState([]);
   const [startPoint, setStartPoint] = useState(null);
   const [route, setRoute] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [favorites, setFavorites] = useState([]);
+  const [favoritePandals, setFavoritePandals] = useState([]);
+  const [showFavorites, setShowFavorites] = useState(false);
+
+  // Check authentication and fetch favorites
+  useEffect(() => {
+    const checkAuthAndFetchFavorites = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/current-user', {
+          credentials: 'include'
+        });
+        const userData = await response.json();
+
+        if (response.ok && userData) {
+          setIsAuthenticated(true);
+          
+          // Fetch user's favorites
+          const favResponse = await fetch('http://localhost:5000/api/user/favorites', {
+            credentials: 'include'
+          });
+          
+          if (favResponse.ok) {
+            const favPandals = await favResponse.json();
+            setFavorites(favPandals.map(p => p.id));
+            setFavoritePandals(favPandals);
+          }
+        } else {
+          setIsAuthenticated(false);
+          setFavorites([]);
+          setFavoritePandals([]);
+        }
+      } catch (error) {
+        console.error('Error checking authentication:', error);
+        setIsAuthenticated(false);
+        setFavorites([]);
+        setFavoritePandals([]);
+      }
+    };
+
+    checkAuthAndFetchFavorites();
+  }, []);
 
   const handleSelectPandal = (pandalId) => {
     if (selectedPandals.includes(pandalId)) {
@@ -58,6 +100,15 @@ const RoutePlanner = ({ pandals }) => {
     }
   };
 
+  // Get the list of pandals to display based on filter
+  const displayedPandals = showFavorites ? favoritePandals : pandals;
+
+  // Add all favorites to route
+  const handleAddAllFavorites = () => {
+    const favoriteIds = favoritePandals.map(p => p.id);
+    setSelectedPandals([...new Set([...selectedPandals, ...favoriteIds])]);
+  };
+
   return (
     <Container className="my-4">
       <h2>Plan Your Pandal Visit</h2>
@@ -85,18 +136,61 @@ const RoutePlanner = ({ pandals }) => {
           <Card>
             <Card.Body>
               <Card.Title>Select Pandals</Card.Title>
-              <ListGroup>
-                {pandals.map(pandal => (
-                  <ListGroup.Item 
-                    key={pandal.id}
-                    action
-                    active={selectedPandals.includes(pandal.id)}
-                    onClick={() => handleSelectPandal(pandal.id)}
-                  >
-                    {pandal.name}
-                  </ListGroup.Item>
-                ))}
-              </ListGroup>
+              
+              {isAuthenticated && favoritePandals.length > 0 && (
+                <div className="mb-3">
+                  <Form.Check 
+                    type="switch"
+                    id="show-favorites-switch"
+                    label={`Show My Favorites (${favoritePandals.length})`}
+                    checked={showFavorites}
+                    onChange={(e) => setShowFavorites(e.target.checked)}
+                    className="mb-2"
+                  />
+                  {showFavorites && (
+                    <Button 
+                      variant="outline-primary" 
+                      size="sm"
+                      className="w-100 mb-2"
+                      onClick={handleAddAllFavorites}
+                    >
+                      <i className="bi bi-heart-fill me-2"></i>
+                      Add All Favorites to Route
+                    </Button>
+                  )}
+                </div>
+              )}
+              
+              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                <ListGroup>
+                  {displayedPandals.map(pandal => (
+                    <ListGroup.Item 
+                      key={pandal.id}
+                      action
+                      active={selectedPandals.includes(pandal.id)}
+                      onClick={() => handleSelectPandal(pandal.id)}
+                      className="d-flex justify-content-between align-items-center"
+                    >
+                      <span>
+                        {favorites.includes(pandal.id) && (
+                          <i className="bi bi-heart-fill text-danger me-2"></i>
+                        )}
+                        {pandal.name}
+                      </span>
+                      {selectedPandals.includes(pandal.id) && (
+                        <i className="bi bi-check-circle-fill text-success"></i>
+                      )}
+                    </ListGroup.Item>
+                  ))}
+                </ListGroup>
+              </div>
+              
+              {selectedPandals.length > 0 && (
+                <div className="mt-2 text-muted small">
+                  {selectedPandals.length} pandal{selectedPandals.length !== 1 ? 's' : ''} selected
+                </div>
+              )}
+              
               <Button 
                 variant="primary" 
                 className="w-100 mt-3"
