@@ -6,8 +6,14 @@
 
 .navbar-brand {
   font-size: 1.5rem;
-  font-weight: bold;
-  color: #ff4d4d !important;
+  font-weight: 800;
+}
+
+.brand-gradient {
+  background: var(--ud-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
 }
 
 .home-container {
@@ -35,7 +41,7 @@
 .footer {
   margin-top: auto;
   padding: 2rem 0;
-  background-color: #f8f9fa;
+  background: linear-gradient(180deg, rgba(201,205,207,0.2), rgba(249,249,249,0.6));
 }
 
 .feedback-form {

@@ -316,7 +316,7 @@ const ExplorePanel = () => {
 
   return (
     <>
-      <div className="bg-light py-3 mb-4 border-bottom">
+      <div className="ud-hero py-3 mb-4">
         <Container>
           <Row className="align-items-center">
             <Col md={8}>

@@ -4,9 +4,9 @@ import { Link } from 'react-router-dom';
 
 function NavigationBar() {
   return (
-    <Navbar bg="light" expand="lg">
+    <Navbar expand="lg" className="ud-navbar sticky-top shadow-sm" variant="light">
       <Container>
-        <Navbar.Brand as={Link} to="/">UtsavDarshan</Navbar.Brand>
+        <Navbar.Brand as={Link} to="/" className="brand-gradient">UtsavDarshan</Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">

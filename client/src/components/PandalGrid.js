@@ -279,49 +279,25 @@ const PandalGrid = ({
 // Add hover effects with CSS
 const styles = `
   .card {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
     border: none;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+    border-radius: 14px;
   }
-  
   .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transform: translateY(-6px);
+    box-shadow: 0 12px 28px rgba(228,0,75,0.12);
   }
-
   .pandal-image {
     transition: transform 0.3s ease-in-out;
-    border-radius: 8px 8px 0 0;
+    border-radius: 14px 14px 0 0;
   }
-
-  .card:hover .pandal-image {
-    transform: scale(1.05);
-  }
-
-  .card-body {
-    padding: 1.25rem;
-  }
-
-  .card-title {
-    font-weight: 600;
-    color: #2c3e50;
-  }
-
-  .text-muted {
-    color: #6c757d !important;
-  }
-
-  .favorite-btn {
-    transition: transform 0.2s;
-  }
-
-  .favorite-btn:hover {
-    transform: scale(1.2);
-  }
-
-  .favorite-btn i {
-    font-size: 1.2rem;
-  }
+  .card:hover .pandal-image { transform: scale(1.04); }
+  .card-body { padding: 1.25rem; }
+  .card-title { font-weight: 700; color: #2c3e50; }
+  .favorite-btn { transition: transform 0.2s; }
+  .favorite-btn:hover { transform: scale(1.15); }
+  .favorite-btn i { font-size: 1.2rem; }
 `;
 
 const styleSheet = document.createElement("style");
