@@ -6,6 +6,7 @@ const Admin = () => {
   const [pendingPandals, setPendingPandals] = useState([]);
   const [feedbacks, setFeedbacks] = useState([]);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [newPandal, setNewPandal] = useState({
     name: '',
     location: '',
@@ -40,7 +41,7 @@ const Admin = () => {
 
   const fetchPendingPandals = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/pandals/pending', {
+        const response = await fetch('http://localhost:5000/api/pandal-registration/pending', {
         credentials: 'include'
       });
       const data = await response.json();
@@ -59,37 +60,51 @@ const Admin = () => {
 
   const handleApprove = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/pandals/${id}/approve`, {
+      setError('');
+      setSuccess('');
+      
+        const response = await fetch(`http://localhost:5000/api/pandal-registration/${id}/approve`, {
         method: 'POST',
         credentials: 'include'
       });
       
+      const data = await response.json();
+      
       if (response.ok) {
+        setSuccess(`Pandal approved successfully! "${data.pandal?.name || 'Pandal'}" is now visible on the explore page.`);
         fetchPendingPandals(); // Refresh the list
       } else {
-        const error = await response.json();
-        setError(error.error);
+        setError(data.error || 'Failed to approve pandal');
+        console.error('Server error:', data);
       }
     } catch (err) {
-      setError('Failed to approve pandal');
+      setError('Network error: Failed to approve pandal');
+      console.error('Network error:', err);
     }
   };
 
   const handleReject = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/pandals/${id}/reject`, {
+      setError('');
+      setSuccess('');
+      
+        const response = await fetch(`http://localhost:5000/api/pandal-registration/${id}/reject`, {
         method: 'POST',
         credentials: 'include'
       });
       
+      const data = await response.json();
+      
       if (response.ok) {
+        setSuccess('Pandal registration rejected successfully.');
         fetchPendingPandals(); // Refresh the list
       } else {
-        const error = await response.json();
-        setError(error.error);
+        setError(data.error || 'Failed to reject pandal');
+        console.error('Server error:', data);
       }
     } catch (err) {
-      setError('Failed to reject pandal');
+      setError('Network error: Failed to reject pandal');
+      console.error('Network error:', err);
     }
   };
 
@@ -144,14 +159,14 @@ const Admin = () => {
   if (error) {
     return (
       <Container className="mt-4">
-        <Alert variant="danger">
+        <Alert variant="danger" dismissible onClose={() => setError('')}>
           {error}
           <br />
           {error.includes('admin privileges') && (
             <small>Please make sure you are logged in with an admin account.</small>
           )}
         </Alert>
-        <Button variant="primary" onClick={() => setError('')}>Try Again</Button>
+        <Button variant="primary" onClick={() => window.location.reload()}>Try Again</Button>
       </Container>
     );
   }
@@ -159,6 +174,18 @@ const Admin = () => {
   return (
     <Container className="mt-4">
       <h2 className="mb-4">Admin Dashboard</h2>
+      
+      {error && (
+        <Alert variant="danger" dismissible onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
+      
+      {success && (
+        <Alert variant="success" dismissible onClose={() => setSuccess('')}>
+          {success}
+        </Alert>
+      )}
       
       <Tab.Container id="admin-tabs" defaultActiveKey="pendingPandals">
         <Nav variant="tabs" className="mb-3">

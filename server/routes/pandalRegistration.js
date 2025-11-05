@@ -110,6 +110,8 @@ router.get('/pending', isAdmin, async (req, res) => {
 // Approve a pandal registration (admin only)
 router.post('/:id/approve', isAdmin, async (req, res) => {
   try {
+    console.log('Approving pandal ID:', req.params.id);
+    
     // Start a transaction
     await db.query('BEGIN');
 
@@ -120,43 +122,61 @@ router.post('/:id/approve', isAdmin, async (req, res) => {
     );
 
     if (pendingPandal.rows.length === 0) {
-      throw new Error('Pending pandal not found');
+      await db.query('ROLLBACK');
+      return res.status(404).json({ error: 'Pending pandal not found' });
     }
 
     const pandal = pendingPandal.rows[0];
+    console.log('Retrieved pending pandal:', pandal);
 
-    // Insert into main pandals table
-    await db.query(
+    // Map pending_pandals fields to main pandals table fields
+    // pending_pandals: address, latitude, longitude -> pandals: location, lat, lng
+    // Create visiting_hours from opening_hours and closing_hours
+    const visitingHours = `${pandal.opening_hours || '6 AM'} - ${pandal.closing_hours || '11 PM'}`;
+    
+    // Insert into main pandals table with correct field mapping
+    const insertResult = await db.query(
       `INSERT INTO pandals (
-        name, description, address, latitude, longitude,
-        contact_number, email, website, opening_hours,
-        closing_hours, wheelchair_accessible, parking_available,
-        food_available, restroom_available, photo_url
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+        name, location, theme, lat, lng, rating, description,
+        image_url, visiting_hours, crowd_level
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING *`,
       [
-        pandal.name, pandal.description, pandal.address,
-        pandal.latitude, pandal.longitude, pandal.contact_number,
-        pandal.email, pandal.website, pandal.opening_hours,
-        pandal.closing_hours, pandal.wheelchair_accessible,
-        pandal.parking_available, pandal.food_available,
-        pandal.restroom_available, pandal.photo_url
+        pandal.name,
+        pandal.address,                    // address -> location
+        'Community',                        // default theme
+        pandal.latitude,                    // latitude -> lat
+        pandal.longitude,                   // longitude -> lng
+        4.0,                               // default rating
+        pandal.description,
+        pandal.photo_url,                  // photo_url -> image_url
+        visitingHours,
+        'Medium'                           // default crowd_level
       ]
     );
 
+    console.log('Inserted into pandals table:', insertResult.rows[0]);
+
     // Update status in pending_pandals
     await db.query(
-      'UPDATE pending_pandals SET status = $1 WHERE id = $2',
+      'UPDATE pending_pandals SET status = $1, updated_at = NOW() WHERE id = $2',
       ['approved', req.params.id]
     );
 
     // Commit transaction
     await db.query('COMMIT');
 
-    res.json({ message: 'Pandal approved successfully' });
+    console.log('Pandal approved successfully');
+    res.json({ 
+      message: 'Pandal approved successfully',
+      pandal: insertResult.rows[0]
+    });
   } catch (error) {
     await db.query('ROLLBACK');
     console.error('Error approving pandal:', error);
-    res.status(500).json({ error: 'Failed to approve pandal' });
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ error: 'Failed to approve pandal: ' + error.message });
   }
 });
 

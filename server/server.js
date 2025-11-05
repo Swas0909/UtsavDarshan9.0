@@ -403,22 +403,26 @@ app.post('/api/pandals/:id/approve', isAdmin, async (req, res) => {
 
     const pandal = pendingPandal.rows[0];
 
-    // Insert into main pandals table
-    await pool.query(
+    // Map fields to existing pandals schema
+    const visitingHours = `${pandal.opening_hours || '06:00'} - ${pandal.closing_hours || '23:00'}`;
+
+    const inserted = await pool.query(
       `INSERT INTO pandals (
-        name, description, location, lat, lng,
-        contact_number, email, website, visiting_hours,
-        wheelchair_accessible, parking_available,
-        food_available, restroom_available, image_url
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
-      [
-        pandal.name, pandal.description, pandal.address,
-        pandal.latitude, pandal.longitude, pandal.contact_number,
-        pandal.email, pandal.website, 
-        `${pandal.opening_hours} - ${pandal.closing_hours}`,
-        pandal.wheelchair_accessible, pandal.parking_available,
-        pandal.food_available, pandal.restroom_available,
-        pandal.photo_url
+        name, location, theme, lat, lng, rating, description,
+        image_url, visiting_hours, crowd_level
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+      RETURNING id, name`
+      ,[
+        pandal.name,
+        pandal.address,
+        'Community',
+        pandal.latitude,
+        pandal.longitude,
+        4.0,
+        pandal.description,
+        pandal.photo_url,
+        visitingHours,
+        'Medium'
       ]
     );
 
@@ -431,11 +435,11 @@ app.post('/api/pandals/:id/approve', isAdmin, async (req, res) => {
     // Commit transaction
     await pool.query('COMMIT');
 
-    res.json({ message: 'Pandal approved successfully' });
+    res.json({ message: 'Pandal approved successfully', pandal: inserted.rows[0] });
   } catch (error) {
     await pool.query('ROLLBACK');
     console.error('Error approving pandal:', error);
-    res.status(500).json({ error: 'Failed to approve pandal' });
+    res.status(500).json({ error: 'Failed to approve pandal: ' + (error.message || 'Unknown error') });
   }
 });
 
