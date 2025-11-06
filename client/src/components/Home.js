@@ -142,7 +142,7 @@ function Home() {
               <div className="about-image-wrapper">
                 <div className="gradient-border">
                   <img 
-                    src="https://www.shutterstock.com/image-photo/mumbai-india-august-052017-thousands-260nw-714183676.jpg" 
+                    src="https://lalbaugcharaja.com/wp-content/uploads/2023/11/DSC07008-scaled.jpg" 
                     alt="Ganesh Chaturthi celebration"
                     className="img-fluid rounded-4 shadow-lg"
                     style={{ objectFit: 'cover', width: '100%', height: '400px' }}

@@ -43,6 +43,179 @@ UtsavDarshan is a web application that helps users discover and navigate Ganpati
 - **Mapping**: Leaflet.js
 - **Additional**: React Bootstrap Icons, react-leaflet
 
+## Architecture and App Routing
+
+High level:
+
+- Client (React) talks to the API server at http://localhost:5000
+- Maps and markers are rendered with react-leaflet (OpenStreetMap tiles)
+- Authentication uses Google OAuth (Passport) with an Express session cookie
+- State is kept client-side in React; data is fetched via REST endpoints
+
+Client routes (React Router):
+
+- `/` Home (hero + about + features + featured pandals)
+- `/explore` ExplorePanel (search, filters, pagination, grid)
+- `/pandal/:id` PandalDetail (full details + reviews)
+- `/plan-route` RoutePlanner (favorites integration + optimized route)
+- `/login` Login (Google OAuth entry)
+- `/admin` Admin dashboard (pending approvals) – guards on `user.is_admin`
+
+Key API routes (Express):
+
+- `GET /api/pandals` – list all pandals
+- `GET /api/pandal/:id` – get one pandal
+- `POST /api/route-plan` – build optimized route (see algorithm below)
+- `GET /api/pandal-registration/pending` – fetch pending submissions (admin)
+- `POST /api/pandal-registration/:id/approve` – approve and move to main table
+- `GET /api/current-user` – current authenticated user
+- `GET /api/user/favorites` – list user favorites
+
+## Database model (PostgreSQL)
+
+Main tables (selected columns):
+
+- `pandals(id, name, location, lat, lng, theme, rating, image_url, created_at, …)`
+- `pending_pandals(id, name, address, latitude, longitude, photo_url, …)`
+- `favorites(id, user_id, pandal_id, created_at)`
+- `users(id, google_id, name, email, is_admin, created_at)`
+
+Data integrity and deduplication:
+
+- Unique index prevents duplicate names (case/space insensitive):
+   `CREATE UNIQUE INDEX uniq_pandals_name_norm ON pandals (LOWER(TRIM(name)));`
+- Admin approval maps `pending_pandals` columns to `pandals` correctly:
+   - address → location, latitude → lat, longitude → lng, photo_url → image_url
+
+## Route planning mechanics
+
+Endpoint: `POST /api/route-plan`
+
+Input JSON:
+
+```json
+{
+   "pandals": [1, 2, 3],
+   "startPoint": { "lat": 19.0760, "lng": 72.8777 }
+}
+```
+
+Output JSON (abridged):
+
+```json
+{
+   "route": [
+      { "pandal": { "id": 2, "name": "…", "coordinates": {"lat":…, "lng":…} }, "distance": 1.49 },
+      …
+   ],
+   "totalDistance": 15.7,
+   "estimatedTime": 150
+}
+```
+
+Server-side algorithm:
+
+- Distance: Haversine formula (accurate great-circle distance in km)
+- Heuristic: Nearest Neighbor (greedy)
+   - Start at the provided `startPoint`
+   - Iteratively pick the closest unvisited pandal
+   - Complexity: O(n²) for n stops – fast for small/medium lists
+- Estimates: 30 minutes per pandal visit → `estimatedTime = n × 30`
+
+Edge cases handled:
+
+- Missing or invalid coordinates → 400/500 error
+- Empty selection or missing start → 400 with a helpful message (client also guards)
+- Mixed data types (string lat/lng) are parsed to floats
+
+Potential upgrades (drop-in ideas):
+
+- 2‑opt / 3‑opt improvement over greedy
+- OSRM/GraphHopper-based real road travel time distances
+- Time windows and crowd-aware scheduling
+
+## Search and filter optimization (Explore)
+
+Core techniques used in `ExplorePanel` and `PandalGrid`:
+
+- Distance computation memoized via `useCallback(calculateDistance, [])`
+- Debounced text search to reduce re-renders while typing
+- Derived lists (filtered/sorted/paginated) computed once per input change
+- Lightweight client-side index fields (e.g., area derived from `location`)
+- Pagination to cap render cost; page size adjustable
+- Cheap comparisons first (strings/tags) before geospatial filters
+
+Filters supported:
+
+- Text search (name/location)
+- Area (derived from the first token of `location`)
+- Theme, rating threshold, favorites-only
+- Distance from user location (if permission granted)
+- Crowd level sort (low → high)
+
+## Admin approval workflow
+
+1. Users submit a pandal → stored in `pending_pandals`
+2. Admin visits `/admin` → sees pending list
+3. Approve → row inserted into `pandals` with field mapping and sensible defaults
+4. Reject → pending row removed
+
+Important fixes baked-in:
+
+- Correct field mapping between `pending_pandals` and `pandals`
+- Unique normalized name index avoids accidental duplicates
+
+## Favorites and authentication
+
+- Google OAuth via Passport; session cookie persisted to the browser
+- Favorites available at `GET /api/user/favorites` for logged-in users
+- Route Planner toggle "Show My Favorites" and one-click "Add All Favorites"
+
+## Local development (Windows / PowerShell)
+
+Open two terminals:
+
+```powershell
+# Terminal 1 (API server)
+cd server
+npm install
+npm start
+
+# Terminal 2 (React client)
+cd client
+npm install
+npm start
+```
+
+Environment variables:
+
+```env
+# server/.env
+DATABASE_URL=postgresql://postgres:your_password@localhost:5432/utsavdarshan
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+SESSION_SECRET=your_session_secret
+
+# client/.env
+PORT=3001
+REACT_APP_API_URL=http://localhost:5000
+```
+
+## Useful scripts (server/scripts)
+
+- `find_duplicate_pandals.js` – reports duplicates by normalized name
+- `delete_duplicate_pandals.js` – keeps the lowest id per name
+- `approve_one_pending.js` / `print_one_pending.js` – approval flow checks
+- `test_route_optimization.js` – prints a sample optimized route end-to-end
+
+## FAQ (quick answers)
+
+- “Why do I see duplicate cards?” → A unique normalized-name index prevents this; run the duplicate cleanup scripts if needed.
+- “How are routes calculated?” → Nearest Neighbor over Haversine distances, starting from your location.
+- “Can I prioritize low-crowd pandals?” → Use the explore filters or the crowd sort; the planner can be extended to honor this.
+- “Why is my map blank?” → Check internet/ad-block; OpenStreetMap tiles are loaded from `https://{s}.tile.openstreetmap.org`.
+
+
 ## Prerequisites
 
 - Node.js (v14 or higher)
