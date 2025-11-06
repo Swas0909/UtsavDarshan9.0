@@ -7,7 +7,7 @@ const pool = new Pool({
   user: "postgres",
   password: "swas1234",
   host: "localhost",
-  port: "9000"
+  port: 5432
 });
 
 const ADMIN_EMAILS = ['amolwfh20@gmail.com', 'medhajjagtap@gmail.com', 'jagtapmanish146@gmail.com'];

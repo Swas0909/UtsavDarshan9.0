@@ -55,7 +55,7 @@ const pool = new Pool({
   user: "postgres",
   password: "swas1234",
   host: "localhost",
-  port: "9000"
+  port: process.env.DB_PORT || 5432,
 });
 
 // Test database connection and check tables
