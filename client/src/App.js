@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Container } from 'react-bootstrap';
 import Navbar from './components/Navbar';
 import Home from './components/Home';
@@ -15,7 +15,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import './App.css';
 
-function App() {
+function AppContent() {
+  const location = useLocation();
   const [pandals, setPandals] = useState([]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -24,6 +25,14 @@ function App() {
     fetchPandals();
     fetchUser();
   }, []);
+
+  // Refresh user state when navigating to home (after OAuth redirect)
+  useEffect(() => {
+    if (location.pathname === '/' && user === null && !loading) {
+      console.log('Checking for auth after navigation to home...');
+      fetchUser();
+    }
+  }, [location.pathname, user, loading]);
 
   const fetchPandals = async () => {
     try {
@@ -42,6 +51,9 @@ function App() {
       });
       if (response.ok) {
         const data = await response.json();
+        if (data) {
+          console.log('User authenticated:', data.id);
+        }
         setUser(data);
       }
     } catch (error) {
@@ -95,6 +107,15 @@ function App() {
         </Routes>
         <Footer user={user} />
       </div>
+    </Router>
+  );
+}
+
+// Wrapper component to provide Router context for useLocation
+function App() {
+  return (
+    <Router>
+      <AppContent />
     </Router>
   );
 }

@@ -98,44 +98,26 @@ function Home() {
           opacity: 1 - scrollY / 500 
         }}
       >
-        <Container>
-          <Row className="align-items-center min-vh-75">
-            <Col lg={8} className="mx-auto text-center">
-              <h1 className="display-3 fw-bold mb-4 hero-title">
-                <span className="brand-gradient">Welcome to UtsavDarshan</span>
-              </h1>
-              <p className="lead fs-4 mb-5 hero-subtitle">
-                Experience the Divine Spirit of Ganesh Chaturthi like never before. 
-                Navigate Mumbai's most magnificent pandals with ease and devotion.
-              </p>
-              <div className="d-flex gap-3 justify-content-center flex-wrap">
-                <Button 
-                  as={Link} 
-                  to="/explore" 
-                  variant="primary" 
-                  size="lg"
-                  className="px-5 py-3"
-                >
-                  <i className="bi bi-compass me-2"></i>
-                  Start Exploring
-                </Button>
-                <Button 
-                  variant="outline-primary" 
-                  size="lg"
-                  className="px-5 py-3"
-                  onClick={() => aboutRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                >
-                  <i className="bi bi-info-circle me-2"></i>
-                  Learn More
-                </Button>
-              </div>
-            </Col>
-          </Row>
-        </Container>
+        <div className="hero-content">
+          <h1 className="hero-headline">
+            Discover Mumbai's Ganpati Pandals, Effortlessly.
+          </h1>
+          <p className="hero-subheading">
+            Explore iconic pandals, plan smarter routes, and experience Ganesh Chaturthi with clarity and devotion.
+          </p>
+          <div className="hero-buttons">
+            <Button 
+              className="btn-primary-saffron"
+              onClick={() => featuredRef.current?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              Start Exploring
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* About Ganesh Chaturthi Section */}
-      <section ref={aboutRef} className="py-5 bg-light fade-in-on-scroll">
+      <section ref={aboutRef} className="py-5 fade-in-on-scroll" style={{ backgroundColor: '#ffffff' }}>
         <Container>
           <Row className="align-items-center">
             <Col lg={6} className="mb-4 mb-lg-0">
@@ -151,15 +133,15 @@ function Home() {
               </div>
             </Col>
             <Col lg={6}>
-              <h2 className="display-5 fw-bold mb-4" style={{ color: 'var(--ud-primary)' }}>
-                <i className="bi bi-star-fill me-3"></i>
+              <h2 className="display-5 fw-bold mb-4" style={{ color: 'var(--text-on-light-primary)' }}>
+                <i className="bi bi-star-fill me-3" style={{ color: '#D9480F' }}></i>
                 The Significance of Ganesh Chaturthi
               </h2>
-              <p className="fs-5 text-muted mb-4">
+              <p className="fs-5 text-muted mb-4" style={{ color: 'var(--text-on-light-secondary)' }}>
                 Ganesh Chaturthi, also known as Vinayaka Chaturthi, is one of the most revered Hindu festivals 
                 celebrating the birth of Lord Ganesha - the elephant-headed deity of wisdom, prosperity, and good fortune.
               </p>
-              <p className="fs-6 mb-4">
+              <p className="fs-6 mb-4" style={{ color: 'var(--text-on-light-secondary)' }}>
                 Celebrated with immense fervor across India, especially in Maharashtra, this 10-day festival brings 
                 communities together in devotion, creativity, and cultural expression. From elaborate pandal decorations 
                 to daily aartis and the grand visarjan (immersion) ceremony, every moment is filled with spiritual energy 
@@ -167,15 +149,15 @@ function Home() {
               </p>
               <div className="d-flex gap-4 flex-wrap">
                 <div className="stat-card">
-                  <h3 className="fw-bold mb-1" style={{ color: 'var(--ud-primary)' }}>10</h3>
-                  <p className="text-muted mb-0">Days of Celebration</p>
+                  <h3 className="fw-bold mb-1" style={{ color: 'var(--color-saffron)' }}>10</h3>
+                  <p className="text-muted mb-0" style={{ color: 'var(--text-on-light-secondary)' }}>Days of Celebration</p>
                 </div>
                 <div className="stat-card">
-                  <h3 className="fw-bold mb-1" style={{ color: 'var(--ud-secondary)' }}>1000+</h3>
-                  <p className="text-muted mb-0">Pandals in Mumbai</p>
+                  <h3 className="fw-bold mb-1" style={{ color: 'var(--color-saffron)' }}>1000+</h3>
+                  <p className="text-muted mb-0" style={{ color: 'var(--text-on-light-secondary)' }}>Pandals in Mumbai</p>
                 </div>
                 <div className="stat-card">
-                  <h3 className="fw-bold mb-1" style={{ color: 'var(--ud-accent)' }}>Millions</h3>
+                  <h3 className="fw-bold mb-1" style={{ color: 'var(--color-saffron)' }}>Millions</h3>
                   <p className="text-muted mb-0">Devotees Visit</p>
                 </div>
               </div>
@@ -185,20 +167,20 @@ function Home() {
       </section>
 
       {/* How UtsavDarshan Helps Section */}
-      <section ref={featuresRef} className="py-5 fade-in-on-scroll">
+      <section ref={featuresRef} className="py-5 fade-in-on-scroll" style={{ backgroundColor: '#ffffff' }}>
         <Container>
           <div className="text-center mb-5">
-            <h2 className="display-5 fw-bold mb-3">
-              <span className="brand-gradient">How UtsavDarshan Helps You</span>
+            <h2 className="display-5 fw-bold mb-3" style={{ color: 'var(--text-on-light-primary)' }}>
+              <span className="brand-gradient" style={{ backgroundImage: 'linear-gradient(135deg, #D9480F, #CFAE70)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>How UtsavDarshan Helps You</span>
             </h2>
-            <p className="lead text-muted">Your intelligent companion for a seamless Ganpati darshan experience</p>
+            <p className="lead" style={{ color: 'var(--text-on-light-secondary)' }}>Your intelligent companion for a seamless Ganpati darshan experience</p>
           </div>
           <Row className="g-4">
             <Col md={4}>
               <Card className="feature-card h-100 border-0 shadow-sm">
                 <Card.Body className="p-4 text-center">
                   <div className="feature-icon mb-3">
-                    <i className="bi bi-map-fill" style={{ fontSize: '3rem', color: 'var(--ud-primary)' }}></i>
+                    <i className="bi bi-map-fill" style={{ fontSize: '3rem', color: '#D9480F' }}></i>
                   </div>
                   <h4 className="fw-bold mb-3">Smart Route Planning</h4>
                   <p className="text-muted">
@@ -212,7 +194,7 @@ function Home() {
               <Card className="feature-card h-100 border-0 shadow-sm">
                 <Card.Body className="p-4 text-center">
                   <div className="feature-icon mb-3">
-                    <i className="bi bi-funnel-fill" style={{ fontSize: '3rem', color: 'var(--ud-secondary)' }}></i>
+                    <i className="bi bi-funnel-fill" style={{ fontSize: '3rem', color: '#CFAE70' }}></i>
                   </div>
                   <h4 className="fw-bold mb-3">Sort by Crowd Levels</h4>
                   <p className="text-muted">
@@ -240,7 +222,7 @@ function Home() {
               <Card className="feature-card h-100 border-0 shadow-sm">
                 <Card.Body className="p-4 text-center">
                   <div className="feature-icon mb-3">
-                    <i className="bi bi-camera-fill" style={{ fontSize: '3rem', color: 'var(--ud-accent)' }}></i>
+                    <i className="bi bi-camera-fill" style={{ fontSize: '3rem', color: '#D9480F' }}></i>
                   </div>
                   <h4 className="fw-bold mb-3">Visual Gallery</h4>
                   <p className="text-muted">
@@ -254,7 +236,7 @@ function Home() {
               <Card className="feature-card h-100 border-0 shadow-sm">
                 <Card.Body className="p-4 text-center">
                   <div className="feature-icon mb-3">
-                    <i className="bi bi-star-fill" style={{ fontSize: '3rem', color: 'var(--ud-primary)' }}></i>
+                    <i className="bi bi-star-fill" style={{ fontSize: '3rem', color: '#D9480F' }}></i>
                   </div>
                   <h4 className="fw-bold mb-3">Community Reviews</h4>
                   <p className="text-muted">
@@ -268,7 +250,7 @@ function Home() {
               <Card className="feature-card h-100 border-0 shadow-sm">
                 <Card.Body className="p-4 text-center">
                   <div className="feature-icon mb-3">
-                    <i className="bi bi-bookmark-fill" style={{ fontSize: '3rem', color: 'var(--ud-secondary)' }}></i>
+                    <i className="bi bi-bookmark-fill" style={{ fontSize: '3rem', color: '#CFAE70' }}></i>
                   </div>
                   <h4 className="fw-bold mb-3">Personalized Experience</h4>
                   <p className="text-muted">
@@ -283,13 +265,13 @@ function Home() {
       </section>
 
       {/* Featured Pandals */}
-      <section ref={featuredRef} className="py-5 bg-light fade-in-on-scroll">
+      <section ref={featuredRef} className="py-5 fade-in-on-scroll" style={{ backgroundColor: '#ffffff' }}>
         <Container>
           <div className="text-center mb-5">
-            <h2 className="display-5 fw-bold mb-3">
-              <span className="brand-gradient">Featured Pandals</span>
+            <h2 className="display-5 fw-bold mb-3" style={{ color: 'var(--text-on-light-primary)' }}>
+              <span className="brand-gradient" style={{ backgroundImage: 'linear-gradient(135deg, #D9480F, #CFAE70)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Featured Pandals</span>
             </h2>
-            <p className="lead text-muted">Discover Mumbai's most iconic and beloved Ganpati pandals</p>
+            <p className="lead" style={{ color: 'var(--text-on-light-secondary)' }}>Discover Mumbai's most iconic and beloved Ganpati pandals</p>
           </div>
           <Row>
             {featuredPandals.map(pandal => (
@@ -311,9 +293,9 @@ function Home() {
                     </div>
                   </div>
                   <Card.Body className="d-flex flex-column p-4">
-                    <Card.Title className="h5 mb-3 fw-bold">{pandal.name}</Card.Title>
-                    <Card.Text className="text-muted mb-3">
-                      <i className="bi bi-geo-alt-fill me-2" style={{ color: 'var(--ud-primary)' }}></i>
+                    <Card.Title className="h5 mb-3 fw-bold" style={{ color: 'var(--text-on-light-primary)' }}>{pandal.name}</Card.Title>
+                    <Card.Text className="text-muted mb-3" style={{ color: 'var(--text-on-light-secondary)' }}>
+                      <i className="bi bi-geo-alt-fill me-2" style={{ color: '#D9480F' }}></i>
                       {pandal.location}
                     </Card.Text>
                     <div className="mt-auto">
@@ -362,47 +344,159 @@ function Home() {
 
 // Enhanced CSS with scroll animations and hover effects
 const styles = `
-  /* Hero Section */
+  /* Import Premium Fonts */
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;500&display=swap');
+
+  /* Hero Section - Premium Devotional Design */
   .hero-section {
-    background: linear-gradient(135deg, rgba(228,0,75,0.05) 0%, rgba(237,119,90,0.05) 50%, rgba(250,214,145,0.05) 100%);
-    padding: 80px 0;
-    min-height: 75vh;
+    min-height: 100vh;
+    width: 100vw;
+    position: relative;
+    background: url('/images/ganesh-hero.jpg') center top / cover fixed;
     display: flex;
     align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding-top: var(--navbar-height);
   }
 
-  .min-vh-75 {
-    min-height: 75vh;
+  /* Radial Gradient Overlay */
+  .hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(0, 0, 0, 0.35) 0%,
+      rgba(0, 0, 0, 0.55) 50%,
+      rgba(0, 0, 0, 0.7) 100%
+    );
+    z-index: 1;
   }
 
-  .hero-title {
-    font-size: clamp(2.5rem, 5vw, 4rem);
+  /* Fade Gradient at Bottom */
+  .hero-section::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: linear-gradient(
+      to bottom,
+      rgba(11, 11, 11, 0),
+      #0B0B0B
+    );
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  /* Hero Content Container */
+  .hero-content {
+    position: relative;
+    z-index: 3;
+    max-width: var(--max-width-container);
+    margin: 0 auto;
+    padding: 0 var(--padding-container-desktop);
+    text-align: center;
+    transform: translateY(-60px);
+  }
+
+  /* Hero Headline */
+  .hero-headline {
+    font-family: var(--font-display);
+    font-weight: var(--text-h1-weight);
+    font-size: var(--text-h1-size);
+    line-height: var(--text-h1-line-height);
+    color: var(--color-ivory);
+    letter-spacing: var(--letter-spacing-tight);
+    margin: 0 0 16px 0;
     animation: fadeInUp 0.8s ease-out;
   }
 
-  .hero-subtitle {
-    animation: fadeInUp 1s ease-out 0.2s backwards;
+  /* Hero Subheading */
+  .hero-subheading {
+    font-family: var(--font-body);
+    font-size: var(--text-body-regular-size);
+    line-height: var(--text-body-regular-line-height);
+    color: rgba(255, 240, 220, 0.85);
+    max-width: 680px;
+    margin: 16px auto 28px;
+    font-weight: var(--text-body-regular-weight);
+    animation: fadeInUp 0.8s ease-out 0.15s backwards;
   }
 
-  .brand-gradient {
-    background: linear-gradient(135deg, #E4004B 0%, #ED775A 35%, #FAD691 70%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+  /* Hero Buttons Container */
+  .hero-buttons {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: center;
+    flex-wrap: wrap;
+    animation: fadeInUp 0.8s ease-out 0.3s backwards;
+  }
+
+  /* Primary CTA - Saffron Button */
+  .btn-primary-saffron {
+    background-color: var(--color-saffron);
+    color: white;
+    border: none;
+    padding: var(--button-padding-y) var(--button-padding-x);
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 15px;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    min-height: var(--button-min-height);
+  }
+
+  .btn-primary-saffron:hover {
+    background-color: #c23d0c;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    color: white;
+    text-decoration: none;
+  }
+
+  .btn-primary-saffron:active {
+    transform: translateY(0);
+  }
+
+  /* Secondary CTA - Outline Button */
+  .btn-secondary-outline {
+    background-color: transparent;
+    color: var(--color-ivory);
+    border: 1px solid var(--color-border-strong);
+    padding: var(--button-padding-y) var(--button-padding-x);
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 15px;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+    position: relative;
+    min-height: var(--button-min-height);
+  }
+
+  .btn-secondary-outline:hover {
+    background-color: rgba(246, 231, 193, 0.1);
+    border-color: rgba(246, 231, 193, 0.9);
+    color: var(--color-ivory);
+    text-decoration: none;
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary-outline:active {
+    transform: translateY(0);
   }
 
   /* Fade in animations */
-  .fade-in-on-scroll {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-  }
-
-  .fade-in-visible {
-    opacity: 1 !important;
-    transform: translateY(0) !important;
-  }
-
   @keyframes fadeInUp {
     from {
       opacity: 0;
@@ -414,24 +508,25 @@ const styles = `
     }
   }
 
-  /* Stat Cards */
-  .stat-card {
-    padding: 1rem;
-    border-left: 3px solid var(--ud-primary);
-    transition: transform 0.3s ease;
+  .fade-in-on-scroll {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
   }
 
-  .stat-card:hover {
-    transform: translateX(10px);
+  .fade-in-visible {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
   }
 
   /* Feature Cards - Inspired by reactbits.dev */
   .feature-card {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 16px;
-    background: white;
+    transition: all var(--transition-normal);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface-dark);
     position: relative;
     overflow: hidden;
+    border: 1px solid var(--color-border-light);
   }
 
   .feature-card::before {
@@ -441,10 +536,10 @@ const styles = `
     left: 0;
     width: 100%;
     height: 4px;
-    background: linear-gradient(90deg, var(--ud-primary), var(--ud-secondary), var(--ud-accent));
+    background: linear-gradient(90deg, var(--color-saffron), var(--color-gold-muted));
     transform: scaleX(0);
     transform-origin: left;
-    transition: transform 0.3s ease;
+    transition: transform var(--transition-normal);
   }
 
   .feature-card:hover::before {
@@ -453,11 +548,12 @@ const styles = `
 
   .feature-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(228, 0, 75, 0.15) !important;
+    border-color: var(--color-border-medium);
+    box-shadow: var(--shadow-md);
   }
 
   .feature-icon {
-    transition: transform 0.3s ease;
+    transition: transform var(--transition-normal);
   }
 
   .feature-card:hover .feature-icon {
@@ -466,25 +562,33 @@ const styles = `
 
   /* Pandal Cards with Hover Effects */
   .pandal-card {
-    border-radius: 16px;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-normal);
     position: relative;
     overflow: hidden;
+    background: var(--color-surface-dark);
+    border: 1px solid var(--color-border-light);
   }
 
   .hover-lift:hover {
-    transform: translateY(-12px) scale(1.02);
-    box-shadow: 0 25px 50px rgba(228, 0, 75, 0.2) !important;
+    transform: translateY(-12px);
+    border-color: var(--color-border-medium);
+    box-shadow: var(--shadow-lg);
   }
 
   .card-image-wrapper {
     position: relative;
-    border-radius: 16px 16px 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    overflow: hidden;
   }
 
   .pandal-image {
-    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 16px 16px 0 0;
+    transition: transform var(--transition-slow);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    display: block;
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
   }
 
   .pandal-card:hover .pandal-image {
@@ -493,12 +597,12 @@ const styles = `
 
   .card-overlay {
     position: absolute;
-    top: 16px;
-    right: 16px;
+    top: var(--space-sm);
+    right: var(--space-sm);
     z-index: 10;
     opacity: 0;
     transform: translateY(-10px);
-    transition: all 0.3s ease;
+    transition: all var(--transition-normal);
   }
 
   .pandal-card:hover .card-overlay {
@@ -509,9 +613,9 @@ const styles = `
   /* Gradient Border Effect */
   .gradient-border {
     padding: 4px;
-    background: linear-gradient(135deg, var(--ud-primary), var(--ud-secondary), var(--ud-accent));
-    border-radius: 20px;
-    transition: transform 0.3s ease;
+    background: linear-gradient(135deg, var(--color-saffron), var(--color-gold-muted));
+    border-radius: var(--radius-xl);
+    transition: transform var(--transition-normal);
   }
 
   .gradient-border:hover {
@@ -520,46 +624,63 @@ const styles = `
 
   .gradient-border img {
     display: block;
+    border-radius: var(--radius-xl);
   }
 
-  /* Button Enhancements */
-  .btn {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
+  /* Stat Cards */
+  .stat-card {
+    padding: var(--space-sm);
+    border-left: 3px solid var(--color-saffron);
+    transition: transform var(--transition-normal);
   }
 
-  .btn::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
-  }
-
-  .btn:hover::before {
-    width: 300px;
-    height: 300px;
-  }
-
-  .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(228, 0, 75, 0.3);
+  .stat-card:hover {
+    transform: translateX(10px);
   }
 
   /* Responsive */
   @media (max-width: 768px) {
     .hero-section {
-      padding: 60px 0;
+      min-height: calc(100vh - 56px);
+      padding-top: 0;
     }
-    
+
+    .hero-content {
+      transform: translateY(-40px);
+      padding: 0 var(--padding-container-mobile);
+    }
+
+    .hero-headline {
+      font-size: clamp(28px, 5vw, 42px);
+    }
+
+    .hero-buttons {
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .btn-primary-saffron,
+    .btn-secondary-outline {
+      width: 100%;
+      max-width: 280px;
+    }
+
     .stat-card {
-      margin-bottom: 1rem;
+      margin-bottom: var(--space-md);
+    }
+
+    .about-image-wrapper {
+      margin-bottom: var(--space-md);
+    }
+  }
+
+  /* Prefers Reduced Motion */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
     }
   }
 `;

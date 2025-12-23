@@ -1,14 +1,6 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const { Pool } = require('pg');
-
-const pool = new Pool({
-  database: "utsavdarshan",
-  user: "postgres",
-  password: "swas1234",
-  host: "localhost",
-  port: "9000"
-});
+const db = require('../db');
 
 const ADMIN_EMAILS = ['amolwfh20@gmail.com', 'medhajjagtap@gmail.com', 'jagtapmanish146@gmail.com'];
 
@@ -18,7 +10,7 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser(async (id, done) => {
   try {
-    const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+    const result = await db.query('SELECT * FROM users WHERE id = $1', [id]);
     done(null, result.rows[0]);
   } catch (err) {
     done(err, null);
@@ -33,7 +25,7 @@ passport.use(new GoogleStrategy({
   async (accessToken, refreshToken, profile, done) => {
     try {
       // Check if user exists
-      const existingUser = await pool.query(
+      const existingUser = await db.query(
         'SELECT * FROM users WHERE google_id = $1',
         [profile.id]
       );
@@ -43,7 +35,7 @@ passport.use(new GoogleStrategy({
       }
 
       // Create new user
-      const newUser = await pool.query(
+      const newUser = await db.query(
         `INSERT INTO users (
           google_id, 
           email, 

@@ -219,13 +219,13 @@ const PandalGrid = ({
                 }}
               />
               <Card.Body className="d-flex flex-column">
-                <Card.Title className="h5 mb-2">{pandal.name}</Card.Title>
-                <Card.Text className="text-muted mb-2">
+                <Card.Title className="h5 mb-2" style={{ color: 'var(--text-on-light-primary)' }}>{pandal.name}</Card.Title>
+                <Card.Text className="text-muted mb-2" style={{ color: 'var(--text-on-light-secondary)' }}>
                   📍 {pandal.location}
                 </Card.Text>
                 <div className="mt-auto">
                   <div className="d-flex justify-content-between align-items-center mb-3">
-                    <div className="d-flex align-items-center">
+                    <div className="d-flex align-items-center" style={{ color: 'var(--text-on-light-secondary)' }}>
                       <span className="text-warning me-1">⭐</span>
                       <span>{pandal.rating}/5</span>
                     </div>

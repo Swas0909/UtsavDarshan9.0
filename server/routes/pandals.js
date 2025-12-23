@@ -1,15 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Pool } = require('pg');
-
-// Database connection
-const pool = new Pool({
-  database: "utsavdarshan",
-  user: "postgres",
-  password: "swas1234",
-  host: "localhost",
-  port: "9000"
-});
+const db = require('../db');
 
 // Helper function to calculate distance
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -60,7 +51,7 @@ router.get('/', async (req, res) => {
       paramCount++;
     }
 
-    const result = await pool.query(query, values);
+    const result = await db.query(query, values);
     let pandals = result.rows.map(p => ({
       ...p,
       coordinates: {
@@ -103,7 +94,7 @@ router.get('/', async (req, res) => {
 // Get pandal by ID
 router.get('/:id', async (req, res) => {
   try {
-    const result = await pool.query(
+    const result = await db.query(
       `SELECT id, name, location, theme, crowd_level as "crowdLevel", 
               rating, lat, lng, image_url as "imageUrl", description,
               visiting_hours as "visitingHours", history, established
@@ -137,7 +128,7 @@ router.get('/:id/favorite', async (req, res) => {
   }
 
   try {
-    const result = await pool.query(
+    const result = await db.query(
       `SELECT * FROM favorites WHERE user_id = $1 AND pandal_id = $2`,
       [req.user.id, req.params.id]
     );
@@ -161,7 +152,7 @@ router.post('/:id/favorite', async (req, res) => {
       return res.status(400).json({ error: 'Invalid action. Must be "add" or "remove"' });
     }
 
-    const pandalExists = await pool.query(
+    const pandalExists = await db.query(
       'SELECT id FROM pandals WHERE id = $1',
       [req.params.id]
     );
@@ -172,7 +163,7 @@ router.post('/:id/favorite', async (req, res) => {
 
     let result;
     if (action === 'add') {
-      result = await pool.query(
+      result = await db.query(
         `INSERT INTO favorites (user_id, pandal_id)
          VALUES ($1, $2)
          ON CONFLICT (user_id, pandal_id) DO NOTHING
@@ -180,7 +171,7 @@ router.post('/:id/favorite', async (req, res) => {
         [req.user.id, req.params.id]
       );
     } else {
-      result = await pool.query(
+      result = await db.query(
         `DELETE FROM favorites 
          WHERE user_id = $1 AND pandal_id = $2
          RETURNING *`,
@@ -207,7 +198,7 @@ router.post('/:id/reviews', async (req, res) => {
 
   try {
     const { rating, review } = req.body;
-    const result = await pool.query(
+    const result = await db.query(
       `INSERT INTO reviews (pandal_id, user_id, rating, review)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
@@ -223,7 +214,7 @@ router.post('/:id/reviews', async (req, res) => {
 // Get reviews
 router.get('/:id/reviews', async (req, res) => {
   try {
-    const result = await pool.query(
+    const result = await db.query(
       `SELECT r.*, u.display_name, u.profile_picture
        FROM reviews r
        LEFT JOIN users u ON r.user_id = u.id

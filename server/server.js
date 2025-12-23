@@ -49,55 +49,18 @@ const isAdmin = (req, res, next) => {
   return next();
 };
 
-// Database connection
-const pool = new Pool({
-  database: "utsavdarshan",
-  user: "postgres",
-  password: "swas1234",
-  host: "localhost",
-  port: "9000"
-});
+// Use the db module (handles PostgreSQL with fallback to mock)
+const db = require('./db');
 
-// Test database connection and check tables
-pool.query('SELECT NOW()', (err, res) => {
-  if (err) {
-    console.error('Database connection error:', err);
-    process.exit(1);
+// Test database connection (non-blocking)
+(async () => {
+  try {
+    await db.query('SELECT NOW()');
+    console.log('Database initialized successfully');
+  } catch (err) {
+    console.error('Database connection error:', err && err.message ? err.message : err);
   }
-  console.log('Database connected successfully');
-  
-  // Check if tables exist
-  pool.query(`
-    SELECT EXISTS (
-      SELECT FROM information_schema.tables 
-      WHERE table_name = 'favorites'
-    );
-  `, (err, res) => {
-    if (err) {
-      console.error('Error checking favorites table:', err);
-    } else {
-      console.log('Favorites table exists:', res.rows[0].exists);
-      if (!res.rows[0].exists) {
-        console.log('Creating favorites table...');
-        pool.query(`
-          CREATE TABLE favorites (
-            id SERIAL PRIMARY KEY,
-            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-            pandal_id INTEGER NOT NULL REFERENCES pandals(id) ON DELETE CASCADE,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(user_id, pandal_id)
-          );
-        `, (err, res) => {
-          if (err) {
-            console.error('Error creating favorites table:', err);
-          } else {
-            console.log('Favorites table created successfully');
-          }
-        });
-      }
-    }
-  });
-});
+})();
 
 // Helper function to calculate distance between coordinates
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -154,7 +117,7 @@ app.get('/api/current-user', (req, res) => {
 // Get user's favorite pandals
 app.get('/api/user/favorites', isAuthenticated, async (req, res) => {
   try {
-    const result = await pool.query(
+    const result = await db.query(
       `SELECT p.id, p.name, p.location, p.theme, p.crowd_level as "crowdLevel",
               p.rating, p.lat, p.lng, p.image_url as "imageUrl", p.description,
               p.visiting_hours as "visitingHours", p.history, p.established,
@@ -199,7 +162,7 @@ app.post('/auth/logout', (req, res) => {
 // Admin Routes
 app.get('/api/admin/users', isAdmin, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM users ORDER BY created_at DESC');
+    const result = await db.query('SELECT * FROM users ORDER BY created_at DESC');
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
@@ -209,7 +172,7 @@ app.get('/api/admin/users', isAdmin, async (req, res) => {
 app.post('/api/admin/pandals', isAdmin, async (req, res) => {
   try {
     const { name, location, theme, lat, lng, description } = req.body;
-    const result = await pool.query(
+    const result = await db.query(
       `INSERT INTO pandals (name, location, theme, lat, lng, description)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
@@ -231,7 +194,7 @@ app.put('/api/admin/pandals/:id/image', isAdmin, async (req, res) => {
       return res.status(400).json({ message: 'Image URL is required' });
     }
 
-    const result = await pool.query(
+    const result = await db.query(
       `UPDATE pandals SET image_url = $1 WHERE id = $2 RETURNING *`,
       [image_url, id]
     );
@@ -251,7 +214,7 @@ app.put('/api/admin/pandals/:id/image', isAdmin, async (req, res) => {
 async function ensureTablesExist() {
   try {
     // First check if the users table exists
-    const usersTableExists = await pool.query(`
+    const usersTableExists = await db.query(`
       SELECT EXISTS (
         SELECT FROM pg_tables 
         WHERE schemaname = 'public' 
@@ -259,14 +222,15 @@ async function ensureTablesExist() {
       );
     `);
 
-    if (!usersTableExists.rows[0].exists) {
+    // Mock DB returns empty rows, so check if rows exist first
+    if (usersTableExists.rows && usersTableExists.rows[0] && !usersTableExists.rows[0].exists) {
       console.error('Users table does not exist! Please create users table first.');
       process.exit(1);
     }
 
     // Create favorites table with proper error handling
     try {
-      await pool.query(`
+      await db.query(`
         CREATE TABLE IF NOT EXISTS favorites (
           id SERIAL PRIMARY KEY,
           user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -282,7 +246,7 @@ async function ensureTablesExist() {
     }
 
     // Create feedback table
-    await pool.query(`
+    await db.query(`
       CREATE TABLE IF NOT EXISTS feedbacks (
         id SERIAL PRIMARY KEY,
         email VARCHAR(255) NOT NULL,
@@ -291,7 +255,7 @@ async function ensureTablesExist() {
       )
     `);
 
-    await pool.query(`
+    await db.query(`
       CREATE TABLE IF NOT EXISTS pending_pandals (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
@@ -343,7 +307,7 @@ app.post('/api/pandals/register', isAuthenticated, async (req, res) => {
     } = req.body;
 
     // Insert into pending_pandals table
-    const result = await pool.query(
+    const result = await db.query(
       `INSERT INTO pending_pandals (
         name, description, address, latitude, longitude,
         contact_number, email, website, opening_hours,
@@ -373,7 +337,7 @@ app.get('/api/pandals/pending', isAdmin, async (req, res) => {
   try {
     console.log('Fetching pending pandals...');
     console.log('User:', req.user);
-    const result = await pool.query(
+    const result = await db.query(
       'SELECT * FROM pending_pandals WHERE status = $1',
       ['pending']
     );
@@ -389,10 +353,10 @@ app.get('/api/pandals/pending', isAdmin, async (req, res) => {
 app.post('/api/pandals/:id/approve', isAdmin, async (req, res) => {
   try {
     // Start a transaction
-    await pool.query('BEGIN');
+    await db.query('BEGIN');
 
     // Get the pending pandal
-    const pendingPandal = await pool.query(
+    const pendingPandal = await db.query(
       'SELECT * FROM pending_pandals WHERE id = $1',
       [req.params.id]
     );
@@ -406,7 +370,7 @@ app.post('/api/pandals/:id/approve', isAdmin, async (req, res) => {
     // Map fields to existing pandals schema
     const visitingHours = `${pandal.opening_hours || '06:00'} - ${pandal.closing_hours || '23:00'}`;
 
-    const inserted = await pool.query(
+    const inserted = await db.query(
       `INSERT INTO pandals (
         name, location, theme, lat, lng, rating, description,
         image_url, visiting_hours, crowd_level
@@ -427,17 +391,17 @@ app.post('/api/pandals/:id/approve', isAdmin, async (req, res) => {
     );
 
     // Update status in pending_pandals
-    await pool.query(
+    await db.query(
       'UPDATE pending_pandals SET status = $1 WHERE id = $2',
       ['approved', req.params.id]
     );
 
     // Commit transaction
-    await pool.query('COMMIT');
+    await db.query('COMMIT');
 
     res.json({ message: 'Pandal approved successfully', pandal: inserted.rows[0] });
   } catch (error) {
-    await pool.query('ROLLBACK');
+    await db.query('ROLLBACK');
     console.error('Error approving pandal:', error);
     res.status(500).json({ error: 'Failed to approve pandal: ' + (error.message || 'Unknown error') });
   }
@@ -446,7 +410,7 @@ app.post('/api/pandals/:id/approve', isAdmin, async (req, res) => {
 // Reject a pandal (admin only)
 app.post('/api/pandals/:id/reject', isAdmin, async (req, res) => {
   try {
-    const result = await pool.query(
+    const result = await db.query(
       'UPDATE pending_pandals SET status = $1 WHERE id = $2 RETURNING *',
       ['rejected', req.params.id]
     );
@@ -505,7 +469,7 @@ app.get('/api/pandals', async (req, res) => {
       paramCount++;
     }
 
-    const result = await pool.query(query, values);
+    const result = await db.query(query, values);
     let pandals = result.rows.map(p => ({
       ...p,
       coordinates: {
@@ -549,7 +513,7 @@ app.get('/api/pandals', async (req, res) => {
 // Get pandal by ID
 app.get('/api/pandals/:id', async (req, res) => {
   try {
-    const result = await pool.query(
+    const result = await db.query(
       `SELECT id, name, location, theme, crowd_level as "crowdLevel", 
               rating, lat, lng, image_url as "imageUrl", description,
               visiting_hours as "visitingHours", history, established
@@ -579,7 +543,7 @@ app.get('/api/pandals/:id', async (req, res) => {
 // Get reviews for a pandal
 app.get('/api/pandals/:id/reviews', async (req, res) => {
   try {
-    const result = await pool.query(
+    const result = await db.query(
       `SELECT * FROM reviews WHERE pandal_id = $1 ORDER BY created_at DESC`,
       [req.params.id]
     );
@@ -593,7 +557,7 @@ app.get('/api/pandals/:id/reviews', async (req, res) => {
 // Get favorite status for a pandal
 app.get('/api/pandals/:id/favorite', isAuthenticated, async (req, res) => {
   try {
-    const result = await pool.query(
+    const result = await db.query(
       `SELECT * FROM favorites WHERE user_id = $1 AND pandal_id = $2`,
       [req.user.id, req.params.id]
     );
@@ -608,7 +572,7 @@ app.get('/api/pandals/:id/favorite', isAuthenticated, async (req, res) => {
 app.post('/api/pandals/:id/reviews', async (req, res) => {
   try {
     const { userId, rating, review } = req.body;
-    const result = await pool.query(
+    const result = await db.query(
       `INSERT INTO reviews (pandal_id, user_id, rating, review)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
@@ -643,7 +607,7 @@ app.post('/api/pandals/:id/favorite', isAuthenticated, async (req, res) => {
     }
 
     // Verify pandal exists first
-    const pandalExists = await pool.query(
+    const pandalExists = await db.query(
       'SELECT id FROM pandals WHERE id = $1',
       [req.params.id]
     );
@@ -656,7 +620,7 @@ app.post('/api/pandals/:id/favorite', isAuthenticated, async (req, res) => {
     let result;
     if (action === 'add') {
       console.log('Adding favorite');
-      result = await pool.query(
+      result = await db.query(
         `INSERT INTO favorites (user_id, pandal_id)
          VALUES ($1, $2)
          ON CONFLICT (user_id, pandal_id) DO NOTHING
@@ -667,7 +631,7 @@ app.post('/api/pandals/:id/favorite', isAuthenticated, async (req, res) => {
       // If no row was returned due to ON CONFLICT DO NOTHING
       if (result.rows.length === 0) {
         // Check if it's already favorited
-        const existing = await pool.query(
+        const existing = await db.query(
           `SELECT * FROM favorites WHERE user_id = $1 AND pandal_id = $2`,
           [req.user.id, req.params.id]
         );
@@ -679,7 +643,7 @@ app.post('/api/pandals/:id/favorite', isAuthenticated, async (req, res) => {
 
     } else if (action === 'remove') {
       console.log('Removing favorite');
-      result = await pool.query(
+      result = await db.query(
         `DELETE FROM favorites 
          WHERE user_id = $1 AND pandal_id = $2
          RETURNING *`,
@@ -722,7 +686,7 @@ app.post('/api/pandals/:id/favorite', isAuthenticated, async (req, res) => {
 app.post('/api/feedback', async (req, res) => {
   try {
     const { email, message } = req.body;
-    const result = await pool.query(
+    const result = await db.query(
       `INSERT INTO feedbacks (email, message)
        VALUES ($1, $2)
        RETURNING *`,
@@ -738,7 +702,7 @@ app.post('/api/feedback', async (req, res) => {
 // Get all feedbacks (admin only)
 app.get('/api/admin/feedbacks', isAdmin, async (req, res) => {
   try {
-    const result = await pool.query(
+    const result = await db.query(
       `SELECT * FROM feedbacks 
        ORDER BY created_at DESC`
     );
@@ -753,7 +717,7 @@ app.get('/api/admin/feedbacks', isAdmin, async (req, res) => {
 app.post('/api/route-plan', async (req, res) => {
   try {
     const { pandals, startPoint } = req.body;
-    const result = await pool.query(
+    const result = await db.query(
       `SELECT id, name, location, lat, lng 
        FROM pandals 
        WHERE id = ANY($1)`,
